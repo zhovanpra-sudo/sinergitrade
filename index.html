@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sinergi Trade Pro - Master VIP</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <style>
+        /* ===================================================
+           1. TEMA WARNA & RESET
+           =================================================== */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        :root {
+            --bg-body: #010409; --bg-app: #0d1117; --bg-card: #161b22; --bg-input: #21262d; --border-color: #30363d;
+            --text-main: #f0f6fc; --text-muted: #8b949e;
+            --color-up: #2ea043; --color-up-light: #3fb950;
+            --color-down: #f85149; --color-down-light: #ff7b72;
+            --color-primary: #58a6ff; --color-warn: #d29922;
+        }
+
+        html, body { width: 100%; max-width: 100vw; overflow-x: hidden; background-color: var(--bg-body); }
+        body { display: flex; justify-content: center; height: 100dvh; color: var(--text-main); font-variant-numeric: tabular-nums; }
+        
+        .app-container { width: 100%; max-width: 480px; background-color: var(--bg-app); height: 100%; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.9); overflow: hidden; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); margin: 0 auto;}
+        
+        /* HEADER MOBILE */
+        .header { flex-shrink: 0; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); border-bottom: 1px solid var(--border-color); z-index: 50; width: 100%;}
+        .logo-area { display: flex; align-items: center; gap: 12px; cursor: pointer; min-width: 0; }
+        .logo-img { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; background: var(--color-primary); flex-shrink: 0; } 
+        .header-title { font-size: 18px; font-weight: 800; color: var(--text-main); letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .header-title span { color: var(--color-primary); }
+        .menu-btn { font-size: 26px; cursor: pointer; color: var(--text-main); transition: 0.2s; padding: 5px; flex-shrink: 0; }
+        .menu-btn:active { color: var(--color-primary); transform: scale(0.9); }
+
+        /* SIDEBAR */
+        .sidebar { position: absolute; top: 0; left: -100%; width: 85%; max-width: 320px; height: 100%; background: var(--bg-card); z-index: 200; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; border-right: 1px solid var(--border-color);}
+        .sidebar.open { left: 0; }
+        .sidebar-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 199; display: none; backdrop-filter: blur(4px); }
+        .sidebar-overlay.open { display: block; animation: fadeBg 0.3s; }
+        @keyframes fadeBg { from { opacity: 0; } to { opacity: 1; } }
+        
+        .sidebar-header { padding: 35px 20px 20px 20px; background: linear-gradient(180deg, var(--bg-input), var(--bg-card)); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px; min-width: 0; }
+        .side-foto-container { width: 55px; height: 55px; background: var(--color-primary); border-radius: 50%; display: flex; justify-content: center; align-items: center; overflow: hidden; color: #000; font-weight: 800; font-size: 24px; box-shadow: 0 0 15px rgba(88, 166, 255, 0.4); position: relative; flex-shrink: 0;}
+        .side-foto-container img { width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top:0; left:0;}
+        .sidebar-item { padding: 16px 24px; border-bottom: 1px solid var(--border-color); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.2s;}
+        .sidebar-item:hover { background: var(--bg-input); color: var(--color-primary); padding-left:30px; }
+
+        /* NAVIGASI BAWAH */
+        .navbar { flex-shrink: 0; height: 65px; background: var(--bg-card); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border-color); z-index: 100; padding-bottom: env(safe-area-inset-bottom); width: 100%;}
+        .nav-item { color: var(--text-muted); font-size: 11px; text-align: center; cursor: pointer; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font-weight: 600; transition: 0.3s;}
+        .nav-item.active { color: var(--color-primary); }
+        .nav-icon { font-size: 22px; }
+
+        /* SCREEN MANAGER */
+        .screens-wrapper { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; scroll-behavior: smooth; width: 100%; background: var(--bg-app); display: none; }
+        .screens-wrapper::-webkit-scrollbar { width: 0px; display: none; }
+        .screen { display: none; padding-bottom: 50px; min-height: 100%; animation: slideIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); width: 100%; box-sizing: border-box;}
+        .screen.active { display: block; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* LOGIN SCREEN */
+        #loginScreen { position: absolute; inset: 0; background: var(--bg-body); z-index: 500; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
+        .login-box { width: 100%; max-width: 400px; background: var(--bg-card); padding: 30px 24px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto;}
+        
+        /* OVERLAYS LOADING */
+        #fullLoadingOverlay { position: absolute; inset: 0; background: rgba(1, 4, 9, 0.95); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; backdrop-filter: blur(5px); }
+        .spinner-ring { width: 60px; height: 60px; border: 6px solid var(--bg-input); border-top: 6px solid var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 25px; box-shadow: 0 0 15px rgba(88, 166, 255, 0.2); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #loadingTextDynamic { color: var(--color-primary); font-weight: 800; font-size: 16px; letter-spacing: 0.5px; }
+
+        /* OVERLAY TARIK TUNAI & VERIFIKASI */
+        #wdLoadingOverlay, #verifyLoadingOverlay { position: fixed; inset: 0; background: rgba(1, 4, 9, 0.98); z-index: 99999; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 30px; text-align: center; backdrop-filter: blur(8px); }
+        .wd-spinner { width: 70px; height: 70px; border: 6px solid var(--bg-input); border-top: 6px solid var(--color-warn); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 30px; box-shadow: 0 0 20px rgba(210, 153, 34, 0.3); }
+        .spinner-blue { border-top: 6px solid var(--color-primary); box-shadow: 0 0 20px rgba(88, 166, 255, 0.3); }
+        .wd-title { font-weight: 900; font-size: 20px; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase; }
+        .wd-text { color: var(--text-main); font-weight: 700; font-size: 15px; margin-bottom: 25px; line-height: 1.4; height: 45px; transition: opacity 0.5s ease; padding: 0 10px; word-break: break-word;}
+        .wd-warning { background: rgba(248, 81, 73, 0.1); border: 1px solid var(--color-down); padding: 15px; border-radius: 8px; font-size: 12px; font-weight: 700; line-height: 1.5; max-width: 350px; width: 100%; box-sizing: border-box; margin: 0 auto;}
+
+        /* WELCOME BONUS MODAL */
+        .welcome-card { background: linear-gradient(145deg, #1f1c08, #161b22); border-radius: 16px; width: 90%; max-width: 380px; overflow: hidden; margin: 0 auto; box-shadow: 0 20px 50px rgba(210, 153, 34, 0.3); border: 1px solid var(--color-warn); position: relative; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .welcome-header { background: #010409; color: var(--color-warn); text-align: center; padding: 20px; font-weight: 900; font-size: 18px; letter-spacing: 1px; border-bottom: 2px solid var(--color-warn);}
+        .welcome-body { padding: 30px 24px; text-align: center; }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* UI COMPONENTS */
+        .input-group { margin-bottom: 18px; width: 100%; display: flex; flex-direction: column; }
+        .input-group label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
+        .input-group input, .input-group select { width: 100%; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 15px; outline: none; transition: 0.2s; box-sizing: border-box; font-family: inherit;}
+        .input-group input:focus, .input-group select:focus { border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);}
+        optgroup { color: var(--color-primary); font-weight: bold; font-style: normal; }
+        option { color: var(--text-main); font-weight: normal; }
+        .btn-primary { width: 100%; padding: 16px; background: var(--color-primary); color: #000; border: none; border-radius: 8px; font-size: 15px; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(88, 166, 255, 0.2); letter-spacing: 0.5px;}
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { background: var(--bg-input) !important; color: var(--text-muted) !important; box-shadow: none; cursor: not-allowed; border: none;}
+
+        .grid-2-btn { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+
+        /* MARKET LIST & FILTER */
+        .filter-tabs { display: flex; background: var(--bg-card); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; overflow-x: auto; width: 100%; scrollbar-width: none;}
+        .filter-tabs::-webkit-scrollbar { display: none; }
+        .f-tab { flex: 1; text-align: center; padding: 16px 10px; font-size: 13px; font-weight: 700; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: 0.2s; white-space: nowrap;}
+        .f-tab.active { color: var(--text-main); border-bottom-color: var(--color-primary); }
+
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border-color); cursor: pointer; background: var(--bg-app); transition: 0.2s; width: 100%; box-sizing: border-box;}
+        .list-item:hover { background: var(--bg-input); }
+        .list-left { flex: 1; min-width: 0; overflow: hidden; } 
+        .list-right { flex-shrink: 0; text-align: right; min-width: 110px; display: flex; flex-direction: column; align-items: flex-end;} 
+        
+        .coin-name { font-weight: 800; font-size: 16px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .price-text { font-weight: 900; font-size: 15px; width: 100%; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .persen-badge { padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 800; margin-top: 6px; display: inline-block; width: 80px; text-align: center;}
+        
+        .bg-up { background: var(--color-up); color: #fff;}
+        .bg-down { background: var(--color-down); color: #fff;}
+        
+        .flash-up { animation: flashGreen 0.8s ease-out; color: var(--color-up-light) !important; }
+        .flash-down { animation: flashRed 0.8s ease-out; color: var(--color-down-light) !important; }
+        @keyframes flashGreen { 0% { background-color: rgba(46, 160, 67, 0.3); } 100% { background-color: transparent; } }
+        @keyframes flashRed { 0% { background-color: rgba(248, 81, 73, 0.3); } 100% { background-color: transparent; } }
+
+        /* TRADE & CHART */
+        .trade-layout { display: flex; flex-direction: column; width: 100%; box-sizing: border-box;}
+        .chart-container { height: 260px; width: 100%; position: relative; padding: 15px 0; border-bottom: 1px solid var(--border-color);}
+        .order-book { display: flex; justify-content: space-between; gap: 15px; font-size: 12px; padding: 15px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); width: 100%; box-sizing: border-box;}
+        .ob-col { width: 48%; overflow: hidden; }
+        .ob-row { display: flex; justify-content: space-between; margin-bottom: 6px; width: 100%; gap: 10px; }
+        .ob-row span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ob-buy { color: var(--color-up-light); }
+        .ob-sell { color: var(--color-down-light); }
+        .trade-right { padding: 20px; }
+        
+        .trade-tabs-container { display: flex; background: var(--bg-input); border-radius: 12px; padding: 5px; margin-bottom: 24px; position: relative; }
+        .t-tab { flex: 1; text-align: center; padding: 14px; cursor: pointer; font-weight: 800; color: var(--text-muted); border-radius: 8px; font-size: 15px; transition: all 0.3s ease; }
+        .t-tab.active-buy { background: var(--color-up); color: #fff; box-shadow: 0 4px 10px rgba(46,160,67,0.3); }
+        .t-tab.active-sell { background: var(--color-down); color: #fff; box-shadow: 0 4px 10px rgba(248,81,73,0.3); }
+
+        /* WALLET */
+        .wallet-card { background: linear-gradient(135deg, #101520, #0d1117); margin: 20px; padding: 25px 20px; border-radius: 12px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid var(--border-color); width: calc(100% - 40px); box-sizing: border-box;}
+        .badge-status { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; display: inline-block; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px;}
+        .badge-trial { background: rgba(210, 153, 34, 0.15); color: var(--color-warn); border: 1px solid var(--color-warn); }
+        .badge-vip { background: rgba(46, 160, 67, 0.15); color: var(--color-up-light); border: 1px solid var(--color-up); }
+        .badge-frozen { background: rgba(248, 81, 73, 0.15); color: var(--color-down-light); border: 1px solid var(--color-down); }
+
+        .sub-header { display: flex; align-items: center; padding: 15px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; width: 100%; box-sizing: border-box;}
+        .back-btn { color: var(--color-primary); font-weight: 700; font-size: 15px; cursor: pointer; flex: 1; display:flex; align-items:center; gap:5px; white-space: nowrap;}
+        
+        .prof-row { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; margin-bottom: 15px; gap: 10px; }
+        .prof-row span:first-child { color: var(--text-muted); font-size: 13px; font-weight: 600; flex-shrink: 0;}
+        .prof-row span:last-child { font-weight: 800; font-size: 14px; color: var(--text-main); text-align: right; word-wrap: break-word; word-break: break-all; flex: 1;}
+        .prof-row:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+
+        /* PAYMENT CARDS */
+        .payment-card { background: var(--bg-input); border: 2px solid transparent; border-radius: 12px; padding: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s; width: 100%; box-sizing: border-box; overflow: hidden;}
+        .payment-card:hover { background: #2a313a; }
+        .payment-card.active { border-color: var(--color-primary); background: rgba(88, 166, 255, 0.05); }
+        .payment-logo { width: 45px; height: 45px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #fff; padding: 4px; overflow: hidden; }
+        .payment-logo img { width: 100%; height: 100%; object-fit: contain; }
+        .payment-details { flex: 1; min-width: 0; }
+        .payment-details div:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* GLOBAL ACTIVITY */
+        .global-item { display: flex; justify-content: space-between; align-items: center; gap: 15px; background: var(--bg-card); padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); width: 100%; box-sizing: border-box;}
+        .global-left { flex: 1; min-width: 0; }
+        .global-right { flex-shrink: 0; text-align: right; }
+        .global-name { font-weight: 800; font-size: 15px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .global-desc { font-size: 13px; color: var(--text-muted); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .global-amount { font-weight: 900; font-size: 16px; color: var(--color-up-light); white-space: nowrap;}
+        .global-time { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+        /* MODALS */
+        .modal-fs { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-app); z-index: 300; display: none; flex-direction: column; overflow-y: auto; overflow-x: hidden;}
+        .modal-fs.active { display: flex; animation: slideIn 0.3s forwards; }
+
+        .struk-card { background: #fff; border-radius: 16px; width: 90%; max-width: 360px; overflow: hidden; margin: 0 auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); position: relative; }
+        .struk-header { background: #010409; color: #fff; text-align: center; padding: 18px; font-weight: 800; font-size: 15px; letter-spacing: 1px; border-bottom: 4px solid var(--color-primary);}
+        .struk-body { padding: 25px 20px; color: #111; }
+        .struk-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px; align-items: flex-start; border-bottom: 1px dashed #eee; padding-bottom: 10px; gap: 10px;}
+        .struk-label { color: #666; width: 40%; font-weight: 600; flex-shrink: 0; }
+        .struk-val { color: #000; font-weight: 800; width: 60%; text-align: right; word-wrap: break-word; word-break: break-all; }
+
+        /* NOTIFIKASI TOAST */
+        #toast { 
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%); 
+            background: var(--color-primary); color: #000; padding: 14px 20px; 
+            border-radius: 8px; font-size: 14px; font-weight: 800; z-index: 99999; 
+            display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+            width: max-content; max-width: 90%; text-align: center; 
+            word-break: break-word; line-height: 1.4; 
+        }
+
+        .edu-text { font-size: 15px; color: var(--text-muted); line-height: 1.7; margin-bottom: 24px; word-wrap: break-word; }
+        .edu-text h3 { color: var(--text-main); margin: 24px 0 12px 0; font-size: 18px; }
+        .edu-text ul { padding-left: 24px; margin-bottom: 18px; }
+        .edu-text li { margin-bottom: 10px; }
+
+        /* RESPONSIVE DESKTOP */
+        @media (min-width: 769px) {
+            .app-container { max-width: 100%; flex-direction: row; margin: 0;}
+            .header, .navbar { display: none !important; }
+            .sidebar { position: relative; left: 0; width: 280px; min-width: 280px; max-width: 280px; display: flex !important; transform: none; border-right: 1px solid var(--border-color); z-index: 10; height: 100vh;}
+            .sidebar-overlay { display: none !important; }
+            .screens-wrapper { display: flex; flex-direction: column; align-items: center; background: var(--bg-body); padding: 30px; box-sizing: border-box; }
+            .screen { padding-bottom: 0; background: transparent !important; width: 100%; max-width: 1000px; display: none;}
+            .screen.active { display: block; }
+            #screenTrade.active { display: flex; flex-direction: row; gap: 24px; align-items: flex-start; max-width: 1200px; width: 100%; }
+            .trade-layout { flex: 1; display: flex; flex-direction: row; gap: 24px; width: 100%; box-sizing: border-box;}
+            .trade-left { flex: 2; display: flex; flex-direction: column; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; min-width: 0;}
+            .trade-right { flex: 1; min-width: 350px; max-width: 400px; background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); box-sizing: border-box; margin-top: 0;}
+            .chart-container { height: 400px; padding: 20px; border-bottom: 1px solid var(--border-color); }
+            .wallet-card { margin: 0 0 24px 0; width: 100%; padding: 30px;}
+            #screenWallet .list-item { background: var(--bg-card); border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); padding: 20px;}
+            #screenProfile > div, #screenEdukasi > div, #screenLegalitas > div, #screenGlobal > div, #screenHistory > div { width: 100%; }
+            .sub-header { border-radius: 12px 12px 0 0; background: transparent; padding: 0 0 20px 0; border-bottom: none; position: relative;}
+            .sub-header .back-btn { background: var(--bg-card); padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color); flex: none; display: inline-flex;}
+            .sub-header div:nth-child(2) { text-align: center; font-size: 22px; flex: 2; }
+            .modal-fs { background: rgba(0,0,0,0.85); align-items: center; justify-content: center; padding: 20px; }
+            .modal-fs .sub-header { display: flex; padding: 20px;}
+            .modal-fs > div { background: var(--bg-app); width: 100%; max-width: 550px; border-radius: 16px; box-shadow: 0 10px 50px rgba(0,0,0,0.9); border: 1px solid var(--border-color); overflow-y: auto;}
+            #screenGateway .sub-header, #screenAktivasi .sub-header, #screenWithdraw .sub-header { display: flex; padding: 20px;}
+            #screenGateway > div, #screenAktivasi > div, #screenWithdraw > div { width: 100%; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div id="toast">Notifikasi</div>
+
+    <div id="fullLoadingOverlay">
+        <div class="spinner-ring"></div>
+        <div id="loadingTextDynamic">Memproses data...</div>
+    </div>
+
+    <div id="verifyLoadingOverlay">
+        <div class="wd-spinner spinner-blue"></div>
+        <div class="wd-title" style="color: var(--color-primary);">SISTEM VERIFIKASI AI</div>
+        <div id="verifyDynamicText" class="wd-text" style="color: var(--color-primary);">Mengunggah data terenkripsi...</div>
+        
+        <div class="wd-warning">
+            <div style="color: var(--color-down-light); font-weight: 900; font-size: 15px; margin-bottom: 12px; text-align: center; letter-spacing: 0.5px;">⚠️ PERINGATAN KERAS ⚠️</div>
+            <div style="color: #fff; font-size: 13px; line-height: 1.6; font-weight: 600;">
+                Sistem sedang mengecek keaslian bukti transfer Anda secara otomatis (Cek Piksel & Mutasi Server).<br><br>
+                <span style="color: var(--color-down-light); text-decoration: underline;">JIKA BUKTI TERDETEKSI PALSU / EDITAN:</span><br>
+                Proses akan dibatalkan permanen dan Anda <b>TIDAK AKAN BISA</b> melakukan penarikan sampai kapanpun.<br><br>
+                <i style="color: #aaa; font-size: 11px; display:block; padding-top:8px; border-top: 1px dashed var(--border-color);">Jika ingin mengirim ulang bukti yang <b>ASLI</b>, hubungi Customer Service agar verifikasi diproses manual.</i>
+            </div>
+        </div>
+    </div>
+
+    <div id="wdLoadingOverlay">
+        <div class="wd-spinner"></div>
+        <div class="wd-title" style="color: var(--color-warn);">Sistem Kliring Otomatis</div>
+        <div id="wdDynamicText" class="wd-text">Memulai proses penarikan...</div>
+        <div class="wd-warning" style="color: var(--color-down-light);">
+            ⚠️ PERINGATAN KEAMANAN:<br><br>
+            Mohon <b>JANGAN</b> tutup atau keluar dari halaman ini. Sistem sedang memproses transaksi asli Anda secara real-time ke Bank/E-Wallet tujuan.
+        </div>
+    </div>
+
+    <div class="modal-fs" id="welcomeBonusModal" style="background: rgba(0,0,0,0.9); justify-content: center; align-items: center; padding: 20px;">
+        <div class="welcome-card">
+            <div class="welcome-header">🎉 SELAMAT DATANG! 🎉</div>
+            <div class="welcome-body">
+                <div style="font-size: 50px; margin-bottom: 15px;">💰</div>
+                <h3 style="color: var(--text-main); font-size: 18px; margin-bottom: 15px;">Akun VIP Anda Telah Aktif!</h3>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px; line-height: 1.6;">Bonus pendaftaran pengguna baru sebesar:</p>
+                <div style="font-size: 28px; font-weight: 900; color: var(--color-warn); margin-bottom: 20px; font-variant-numeric: tabular-nums;">Rp 500.000</div>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px; line-height: 1.6;">Telah berhasil ditambahkan ke dalam Dompet Utama Anda.</p>
+                <button style="width: 100%; padding: 18px; background: linear-gradient(90deg, #d29922, #f5d061); border: none; border-radius: 10px; font-weight: 900; font-size: 16px; cursor: pointer; color: #000; box-shadow: 0 5px 15px rgba(210, 153, 34, 0.4);" onclick="tutupWelcomeBonus()">Klaim & Mulai Trading</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loginScreen" style="display: none;">
+        <div class="login-box">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img src="Logo.jpg" style="width: 75px; height: 75px; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 8px 25px rgba(88, 166, 255, 0.4);" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'75\' height=\'75\'><rect width=\'75\' height=\'75\' fill=\'%2358a6ff\' rx=\'16\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'black\' font-weight=\'bold\' font-size=\'35\'>S</text></svg>'">
+                <h1 style="color: var(--text-main); font-size: 26px; font-weight: 900; letter-spacing: 1px;">Sinergi <span style="color: var(--color-primary);">Pro</span></h1>
+                <p style="color: var(--text-muted); font-size: 13px; margin-top: 5px;">Terminal Perdagangan Digital VIP</p>
+            </div>
+            <div class="input-group"><label>Username</label><input type="text" id="regUser" placeholder="Contoh: TraderVIP"></div>
+            <div class="input-group"><label>Email Aktif</label><input type="email" id="regEmail" placeholder="Contoh: trader@email.com"></div>
+            <div class="input-group">
+                <label>Pilih Bank / E-Wallet Pencairan</label>
+                <select id="regBank">
+                    <option value="" disabled selected>-- Pilih Institusi --</option>
+                    <optgroup label="E-Wallet Terpopuler">
+                        <option value="DANA">DANA</option><option value="GoPay">GoPay</option><option value="OVO">OVO</option>
+                        <option value="ShopeePay">ShopeePay</option><option value="LinkAja">LinkAja</option><option value="Sakuku">Sakuku</option><option value="iSaku">iSaku</option>
+                    </optgroup>
+                    <optgroup label="Bank Nasional">
+                        <option value="BCA">Bank BCA</option><option value="Mandiri">Bank Mandiri</option><option value="BNI">Bank BNI</option>
+                        <option value="BRI">Bank BRI</option><option value="BTN">Bank BTN</option><option value="CIMB Niaga">CIMB Niaga</option>
+                        <option value="Permata">Bank Permata</option><option value="Danamon">Bank Danamon</option><option value="Panin">Panin Bank</option><option value="Mega">Bank Mega</option>
+                    </optgroup>
+                    <optgroup label="Bank Digital">
+                        <option value="SeaBank">SeaBank</option><option value="Jago">Bank Jago</option><option value="Neo Commerce">Neo Commerce (BNC)</option>
+                        <option value="Blu">Blu by BCA</option><option value="Aladin">Bank Aladin</option>
+                    </optgroup>
+                    <optgroup label="Bank Syariah">
+                        <option value="BSI">BSI (Bank Syariah Indonesia)</option><option value="BCA Syariah">BCA Syariah</option><option value="Muamalat">Bank Muamalat</option>
+                    </optgroup>
+                    <optgroup label="Bank Daerah (BPD)">
+                        <option value="Bank DKI">Bank DKI</option><option value="Bank BJB">Bank BJB</option><option value="Bank Jateng">Bank Jateng</option><option value="Bank Jatim">Bank Jatim</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="input-group"><label>Nama Sesuai Rekening</label><input type="text" id="regName" placeholder="Nama Lengkap Asli"></div>
+            <div class="input-group"><label>Nomor Rekening / E-Wallet</label><input type="number" id="regNumber" placeholder="Minimal 8 Angka Valid"></div>
+            <button class="btn-primary" onclick="prosesDaftar()" style="margin-top: 10px;">Daftar & Masuk Dashboard</button>
+        </div>
+    </div>
+
+    <div class="header" id="mainHeader" style="display: none;">
+        <div class="logo-area" onclick="location.reload()">
+            <img src="Logo.jpg" alt="Logo" class="logo-img" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'34\' height=\'34\'><rect width=\'34\' height=\'34\' fill=\'%2358a6ff\' rx=\'8\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'black\' font-weight=\'bold\' font-size=\'18\'>S</text></svg>'">
+            <div class="header-title">Sinergi<span style="color:var(--color-primary);">Pro</span></div>
+        </div>
+        <div class="menu-btn" onclick="toggleSidebar()">☰</div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="logo-area" style="padding: 20px; border-bottom: 1px solid var(--border-color); justify-content: center; background: var(--bg-body);" onclick="location.reload()">
+            <img src="Logo.jpg" alt="Logo" class="logo-img" style="width: 40px; height:40px;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'34\' height=\'34\'><rect width=\'34\' height=\'34\' fill=\'%2358a6ff\' rx=\'8\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'black\' font-weight=\'bold\' font-size=\'18\'>S</text></svg>'">
+            <div class="header-title" style="font-size: 22px;">Sinergi<span style="color:var(--color-primary);">Pro</span></div>
+        </div>
+
+        <div class="sidebar-header">
+            <div class="side-foto-container"><span id="sideInisial">U</span><img id="sideImage" src=""></div>
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 800; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="sideUsername">User</div>
+                <div id="sideStatus" class="badge-status badge-trial">Status: TRIAL</div>
+            </div>
+        </div>
+        <div style="flex: 1; overflow-y: auto; padding-top: 15px;">
+            <div style="padding: 0 20px 10px 20px; font-size:11px; color:#666; font-weight:800; text-transform:uppercase;">Menu Utama</div>
+            <div class="sidebar-item" onclick="triggerNav('Market', 0)">📈 Market Kripto Live</div>
+            <div class="sidebar-item" onclick="triggerNav('Trade', 1)">💱 Terminal Perdagangan</div>
+            <div class="sidebar-item" onclick="triggerNav('Wallet', 2)">💼 Dua Dompet Utama</div>
+            
+            <div style="padding: 15px 20px 10px 20px; font-size:11px; color:#666; font-weight:800; text-transform:uppercase;">Sosial & Edukasi</div>
+            <div class="sidebar-item" onclick="triggerNav('Global', null)" style="color: var(--color-up-light);">🌐 Aktivitas Global (Live)</div>
+            <div class="sidebar-item" onclick="triggerNav('Edukasi', null)">📖 Panduan Trading</div>
+            
+            <div style="padding: 15px 20px 10px 20px; font-size:11px; color:#666; font-weight:800; text-transform:uppercase;">Akun & Pengaturan</div>
+            <div class="sidebar-item" onclick="triggerNav('Profile', 3)">👤 Profil & Keamanan</div>
+            
+            <div class="sidebar-item" onclick="cekBukaAktivasi()" style="color: var(--color-warn);">👑 Upgrade Limit VIP</div>
+            
+            <div class="sidebar-item" onclick="triggerNav('Legalitas', null)">⚖️ Tentang & Legalitas</div>
+            
+            <div style="height: 1px; background: var(--border-color); margin: 15px 0;"></div>
+            <div class="sidebar-item" style="color: var(--color-down-light);" onclick="resetAplikasi()">⚠️ Keluar & Hapus Akun</div>
+        </div>
+    </div>
+
+    <div class="screens-wrapper" id="mainWrapper" style="display: none;">
+        
+        <div id="screenMarket" class="screen active">
+            <div class="filter-tabs">
+                <div class="f-tab active" onclick="setMarketFilter('gainers', this)">Top Gainers</div>
+                <div class="f-tab" onclick="setMarketFilter('losers', this)">Top Losers</div>
+                <div class="f-tab" onclick="setMarketFilter('vol', this)">Volume</div>
+            </div>
+            <div id="marketList"></div>
+        </div>
+
+        <div id="screenTrade" class="screen">
+            <div class="trade-layout">
+                <div class="trade-left">
+                    <div style="padding: 18px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); gap: 10px;">
+                        <div style="font-size: 20px; font-weight: 800; cursor:pointer; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="triggerNav('Market', 0)"><span id="tradePairName">SNG/IDR</span> <span style="font-size:12px; color:var(--text-muted);">▾</span></div>
+                        <div style="text-align: right; min-width: 120px; overflow: hidden; flex-shrink: 0;">
+                            <div style="font-size: 22px; font-weight: 900; transition: color 0.3s; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="tradeMainPrice">0</div>
+                            <div style="font-size: 13px; font-weight: 800;" id="tradePctInfo">+0.00%</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div style="position: absolute; top: 10px; left: 15px; font-size: 11px; color: var(--text-muted); font-weight: 700; z-index:5;">💡 Geser (Pan) / Scroll (Zoom) grafik</div>
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                    <div class="order-book">
+                        <div class="ob-col" id="obBuyList"><div style="color:var(--text-main); font-weight:bold; margin-bottom:6px;">Bid (Beli)</div></div>
+                        <div class="ob-col" id="obSellList" style="text-align:right;"><div style="color:var(--text-main); font-weight:bold; margin-bottom:6px;">Ask (Jual)</div></div>
+                    </div>
+                </div>
+
+                <div class="trade-right">
+                    <div class="trade-tabs-container">
+                        <div class="t-tab active-buy" id="tabBuy" onclick="setTradeMode('buy')">Beli Aset</div>
+                        <div class="t-tab" id="tabSell" onclick="setTradeMode('sell')">Jual Aset</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-bottom: 12px; font-weight:600; gap: 10px;">
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><span id="labelTersedia">Saldo Utama IDR</span>: <strong id="tradeAvail" style="color:var(--text-main);">Rp 0</strong></span>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 24px; align-items: stretch;">
+                        <input type="number" id="tradeAmount" placeholder="Nominal IDR/Koin" style="flex: 1; padding: 16px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 16px; outline: none; font-weight: 800; min-width: 0; box-sizing: border-box;" oninput="calcEstimasi()">
+                        <button style="background: var(--bg-input); color: var(--color-primary); border: 1px solid var(--color-primary); border-radius: 12px; padding: 0 20px; font-size: 15px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; box-sizing: border-box; flex-shrink: 0;" onclick="setTradeMax()">MAX</button>
+                    </div>
+                    <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; margin-bottom: 30px; font-size: 14px; border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; gap: 10px;"><span style="color: var(--text-muted); flex-shrink: 0;">Harga Pasar:</span> <strong id="tradeCurrentPrice" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Rp 0</strong></div>
+                        <div style="display: flex; justify-content: space-between; align-items:center; gap: 10px;"><span style="color: var(--text-muted); font-weight:700; flex-shrink: 0;">Diterima:</span> <strong id="tradeEst" style="color: var(--color-primary); font-size:16px; font-weight:900; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">0</strong></div>
+                    </div>
+                    <button class="btn-primary" id="btnProsesTrade" onclick="executeTrade()" style="background: var(--color-up); color: #fff; padding: 18px; font-size:16px; border-radius: 12px;">Eksekusi Beli</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenWallet" class="screen">
+            <div class="wallet-card">
+                <div style="font-size: 12px; color: var(--text-muted); font-weight: 800; letter-spacing: 1px;">TOTAL EKUITAS KESELURUHAN</div>
+                <div style="font-size: 28px; font-weight: 900; margin: 8px 0 20px 0; color: #fff; font-variant-numeric: tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="walletTotalEq">Rp 0</div>
+                <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 15px;">
+                    <div style="flex: 1; min-width: 0;"><div style="font-size: 11px; color: #aaa; font-weight: 800; margin-bottom: 4px;">DOMPET UTAMA</div><div style="font-size: 15px; font-weight: 900; color: var(--color-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="walletSaldoIDR">Rp 0</div></div>
+                    <div style="text-align: right; flex: 1; min-width: 0;"><div style="font-size: 11px; color: #aaa; font-weight: 800; margin-bottom: 4px;">DOMPET KOIN</div><div style="font-size: 15px; font-weight: 900; color: var(--color-up-light); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="walletSaldoKoin">Rp 0</div></div>
+                </div>
+                <div class="grid-2-btn">
+                    <button style="padding:14px; border-radius:8px; font-weight:900; cursor:pointer; font-size:14px; background:transparent; color:var(--color-primary); border:2px solid var(--color-primary); text-align:center; width:100%; box-sizing:border-box;" onclick="bukaModalDeposit()">Deposit</button>
+                    <button style="padding:14px; border-radius:8px; font-weight:900; cursor:pointer; font-size:14px; background:var(--color-primary); color:#000; border:none; text-align:center; width:100%; box-sizing:border-box;" onclick="prosesCekTarik()">Tarik Tunai</button>
+                </div>
+            </div>
+            <div style="padding: 0 20px 10px 20px; font-weight: 800; font-size: 14px; color: var(--text-muted); text-transform:uppercase;">Daftar Aset Kripto Anda</div>
+            <div style="padding: 0 20px; margin-bottom: 20px;"><div style="background:var(--bg-input); padding:16px; border-radius:8px; text-align:center; font-weight:800; cursor:pointer; color:var(--text-main); border:1px solid var(--border-color); font-size:14px;" onclick="triggerNav('History')">Lihat Buku Mutasi Lengkap ➔</div></div>
+            <div id="portfolioList" style="padding: 0 20px;"></div>
+        </div>
+
+        <div id="screenProfile" class="screen">
+            <div style="width: 100%; box-sizing: border-box;">
+                <div style="text-align: center; margin: 35px 20px 25px 20px;">
+                    <div class="side-foto-container" style="width:85px; height:85px; font-size:36px; margin:0 auto 15px auto;"><span id="profInisial">U</span><img id="profImage" src=""></div>
+                    <h2 style="font-size: 22px; color: var(--text-main); margin-bottom: 8px; font-weight:900; word-break: break-all;" id="profName">User</h2>
+                    <div id="profStatus" class="badge-status badge-trial" style="font-size: 11px; padding:6px 12px;">Status: TRIAL ACCOUNT</div>
+                </div>
+                <div style="margin: 0 20px 20px 20px;">
+                    <button class="btn-primary" style="background: transparent; border: 1px solid var(--color-primary); color: var(--color-primary); box-shadow: none;" onclick="bukaModalEdit()">✏️ Konfigurasi Profil & Foto</button>
+                </div>
+                <div style="padding: 0 20px;">
+                    <div style="font-weight: 800; font-size: 13px; color: var(--text-muted); margin-bottom: 10px; text-transform:uppercase;">Informasi Akun Utama</div>
+                    <div style="background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); padding: 20px; margin-bottom: 20px;">
+                        <div class="prof-row"><span>UID Pengguna</span><span id="profUID">-</span></div>
+                        <div class="prof-row"><span>Email</span><span id="profEmail"></span></div>
+                        <div class="prof-row"><span>No. Telepon Aktif</span><span id="profPhone">-</span></div>
+                        <div class="prof-row"><span>Bergabung</span><span id="profJoinDate">-</span></div>
+                        <div class="prof-row"><span>Kode Referral</span><span style="color:var(--color-primary); font-family:monospace;">SNG-<span id="profRef">XYZ</span></span></div>
+                    </div>
+                    <div style="font-weight: 800; font-size: 13px; color: var(--text-muted); margin-bottom: 10px; text-transform:uppercase;">Keamanan & Verifikasi</div>
+                    <div style="background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); padding: 20px; margin-bottom: 20px;">
+                        <div class="prof-row"><span>Status Identitas</span><span style="color:var(--color-up-light);">Terverifikasi ✅</span></div>
+                        <div class="prof-row"><span>Google 2FA</span><span style="color:var(--color-warn);">Tidak Aktif 🔓</span></div>
+                        <div class="prof-row"><span>Perangkat Aktif</span><span style="color:#aaa; font-weight:600; font-size:12px;" id="profDevice">Memuat...</span></div>
+                    </div>
+                    <div style="font-weight: 800; font-size: 13px; color: var(--text-muted); margin-bottom: 10px; text-transform:uppercase;">Rekening Pencairan</div>
+                    <div style="background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); padding: 20px;">
+                        <div class="prof-row"><span>Bank/E-Wallet</span><span style="color:var(--color-primary);" id="profBank">-</span></div>
+                        <div class="prof-row"><span>Atas Nama</span><span id="profAccName">-</span></div>
+                        <div class="prof-row"><span>No. Rekening</span><span style="font-family:monospace; font-size:14px;" id="profAccNo">-</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenHistory" class="screen">
+            <div style="width: 100%; box-sizing: border-box;">
+                <div class="sub-header"><div class="back-btn" onclick="triggerNav('Wallet', 2)">❮ Kembali</div><div style="font-weight:800; font-size:18px; color:var(--text-main); flex:2; text-align:center;">Buku Mutasi</div><div style="flex:1;"></div></div>
+                <div class="filter-tabs" style="margin-bottom: 10px;">
+                    <div class="f-tab active" onclick="setHistFilter('all', this)">Semua</div>
+                    <div class="f-tab" onclick="setHistFilter('trade', this)">Trading</div>
+                    <div class="f-tab" onclick="setHistFilter('in', this)">Deposit</div>
+                    <div class="f-tab" onclick="setHistFilter('out', this)">Tarik</div>
+                </div>
+                <div id="historyList" style="padding: 0 20px 20px 20px;"></div>
+            </div>
+        </div>
+
+        <div id="screenGlobal" class="screen">
+            <div style="width: 100%; box-sizing: border-box;">
+                <div class="sub-header"><div class="back-btn" onclick="triggerNav('Market', 0)">❮ Home</div><div style="font-weight:800; font-size:18px; color:var(--text-main); flex:2; text-align:center;">Aktivitas Global</div><div style="flex:1;"></div></div>
+                <div style="padding: 20px;">
+                    <div style="background: rgba(46, 160, 67, 0.1); border: 1px solid var(--color-up); border-radius: 8px; padding: 15px; margin-bottom: 20px; display:flex; gap:10px; align-items:center;">
+                        <div style="width:12px; height:12px; background:var(--color-up-light); border-radius:50%; box-shadow:0 0 10px var(--color-up-light); animation: blink 1s infinite; flex-shrink: 0;"></div>
+                        <div style="font-size:13px; color:var(--text-main); font-weight:700;">LIVE: Data Penarikan Sinergi Pro (Real-time)</div>
+                    </div>
+                    <style>@keyframes blink { 0% {opacity:1;} 50% {opacity:0.3;} 100% {opacity:1;} }</style>
+                    <div id="globalList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenEdukasi" class="screen">
+            <div style="width: 100%; box-sizing: border-box;">
+                <div class="sub-header"><div class="back-btn" onclick="triggerNav('Market', 0)">❮ Home</div><div style="font-weight:800; font-size:18px; color:var(--text-main); flex:2; text-align:center;">Panduan Trading</div><div style="flex:1;"></div></div>
+                <div style="padding: 20px;">
+                    <div style="background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); padding: 20px; margin-bottom: 20px;">
+                        <h2 style="color:var(--color-primary); margin-bottom:15px; font-size:18px;">Cara Membaca Market</h2>
+                        <div class="edu-text">
+                            <p>Trading di Sinergi Pro dirancang agar intuitif dan mudah dipahami. Prinsip psikologi dasar trading adalah <strong>Membeli saat pasar sedang koreksi (merah), dan Menjual saat aset di puncak harga (hijau).</strong></p>
+                            <h3>1. Membaca Indikator</h3>
+                            <ul><li><strong style="color:var(--color-up-light);">Zona Hijau (+%)</strong> : Tren sedang menguat. Waktu ideal untuk mengamankan profit (Jual).</li><li><strong style="color:var(--color-down-light);">Zona Merah (-%)</strong> : Pasar sedang koreksi atau "diskon". Momen emas untuk membeli aset.</li></ul>
+                            <h3>2. Tipe Aset Digital</h3>
+                            <ul><li><strong>Koin Fundamental:</strong> Stabil, pergerakan lambat, cocok untuk tabungan jangka panjang.</li><li><strong>Koin Volatilitas Tinggi (Agresif):</strong> Fluktuasi ekstrem. Harga bisa melesat tinggi dalam hitungan menit, cocok untuk Scalping.</li><li><strong>Hidden Assets:</strong> Aset yang kadang tertidur lama, namun bisa memompa volume secara tiba-tiba.</li></ul>
+                            <h3>3. Manajemen Risiko</h3>
+                            <p>Manfaatkan grafik <i>Zoom & Pan</i> untuk menganalisis batas bawah harga. Jangan habiskan seluruh saldo IDR pada satu titik tertinggi (pucuk).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenLegalitas" class="screen">
+            <div style="width: 100%; box-sizing: border-box;">
+                <div class="sub-header"><div class="back-btn" onclick="triggerNav('Market', 0)">❮ Home</div><div style="font-weight:800; font-size:18px; color:var(--text-main); flex:2; text-align:center;">Legalitas Platform</div><div style="flex:1;"></div></div>
+                <div style="padding: 20px;">
+                    <div style="background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); padding: 20px; margin-bottom: 20px;">
+                        <h2 style="color:var(--text-main); margin-bottom:15px; font-size:18px;">Syarat & Ketentuan Layanan</h2>
+                        <div class="edu-text">
+                            <p>Dengan mengakses Sinergi Trade Pro, Anda menyetujui persyaratan berikut:</p>
+                            <h3>1. Peringatan Risiko Finansial</h3><p>Perdagangan aset digital memiliki tingkat risiko yang sangat tinggi. Anda tidak boleh menginvestasikan uang yang Anda tidak rela kehilangannya.</p>
+                            <h3>2. Batasan Tanggung Jawab</h3><p>Sinergi Pro tidak bertanggung jawab atas segala kerugian materiil akibat kegagalan sistem atau penundaan jaringan.</p>
+                            <h3>3. Kebijakan Anti Pencucian Uang</h3><p>Sistem berhak menunda penarikan jika terdeteksi aktivitas mencurigakan atau volume perdagangan tidak seimbang dengan modal yang masuk (Syarat 2x Modal).</p>
+                            <h3>4. Legalitas Algoritma</h3><p>Sistem penentuan harga bersifat dinamis tertutup (Closed-Loop Market).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modalEditProfile" class="modal-fs">
+            <div style="width: 100%; box-sizing: border-box;">
+                <div class="sub-header"><div class="back-btn" onclick="tutupModal('modalEditProfile'); loadTempProfile();">❮ Batal</div><div style="font-weight:800; font-size:18px; color:var(--text-main); flex:2; text-align:center;">Edit Profil</div><div style="flex:1;"></div></div>
+                <div style="padding: 25px 20px;">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <div class="side-foto-container" style="width:90px; height:90px; font-size:35px; margin:0 auto 15px auto;" onclick="document.getElementById('uploadFoto').click()"><span id="editInisial">U</span><img id="editImage" src=""></div>
+                        <button style="background: var(--bg-card); color:var(--color-primary); border:1px solid var(--color-primary); padding:10px 20px; border-radius:8px; font-size:13px; font-weight:800; cursor:pointer;" onclick="document.getElementById('uploadFoto').click()">Pilih Foto Galeri</button>
+                        <input type="file" id="uploadFoto" accept="image/*" style="display: none;" onchange="handleFoto(event)">
+                    </div>
+                    <div class="input-group"><label>Username</label><input type="text" id="eUser"></div>
+                    <div class="input-group"><label>Email</label><input type="email" id="eEmail"></div>
+                    <div class="input-group"><label>Nomor Telepon (HP)</label><input type="number" id="ePhone" placeholder="Contoh: 08123456789"></div>
+                    <div style="border-top: 1px dashed var(--border-color); margin: 20px 0;"></div>
+                    <div class="input-group">
+                        <label>Bank / E-Wallet Pencairan</label>
+                        <select id="eBank">
+                            <option value="" disabled>-- Pilih Institusi --</option>
+                            <optgroup label="E-Wallet Terpopuler">
+                                <option value="DANA">DANA</option><option value="GoPay">GoPay</option><option value="OVO">OVO</option>
+                                <option value="ShopeePay">ShopeePay</option><option value="LinkAja">LinkAja</option><option value="Sakuku">Sakuku</option><option value="iSaku">iSaku</option>
+                            </optgroup>
+                            <optgroup label="Bank Nasional">
+                                <option value="BCA">Bank BCA</option><option value="Mandiri">Bank Mandiri</option><option value="BNI">Bank BNI</option>
+                                <option value="BRI">Bank BRI</option><option value="BTN">Bank BTN</option><option value="CIMB Niaga">CIMB Niaga</option>
+                                <option value="Permata">Bank Permata</option><option value="Danamon">Bank Danamon</option><option value="Panin">Panin Bank</option><option value="Mega">Bank Mega</option>
+                            </optgroup>
+                            <optgroup label="Bank Digital">
+                                <option value="SeaBank">SeaBank</option><option value="Jago">Bank Jago</option><option value="Neo Commerce">Neo Commerce (BNC)</option>
+                                <option value="Blu">Blu by BCA</option><option value="Aladin">Bank Aladin</option>
+                            </optgroup>
+                            <optgroup label="Bank Syariah">
+                                <option value="BSI">BSI (Bank Syariah Indonesia)</option><option value="BCA Syariah">BCA Syariah</option><option value="Muamalat">Bank Muamalat</option>
+                            </optgroup>
+                            <optgroup label="Bank Daerah (BPD)">
+                                <option value="Bank DKI">Bank DKI</option><option value="Bank BJB">Bank BJB</option><option value="Bank Jateng">Bank Jateng</option><option value="Bank Jatim">Bank Jatim</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="input-group"><label>Nama Rekening Baru</label><input type="text" id="eName"></div>
+                    <div class="input-group"><label>Nomor Rekening Baru</label><input type="number" id="eNumber"></div>
+                    <button class="btn-primary" onclick="simpanProfil()" style="margin-top: 10px;">Simpan Perubahan</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="modalDeposit" class="modal-fs">
+            <div style="width: 100%; box-sizing: border-box;">
+                <div class="sub-header"><div class="back-btn" onclick="tutupModal('modalDeposit')">❮ Batal</div><div style="font-weight:800; font-size:18px; color:var(--text-main); flex:2; text-align:center;">Isi Saldo</div><div style="flex:1;"></div></div>
+                <div style="padding: 25px 20px;">
+                    <div style="background: rgba(88, 166, 255, 0.1); border-radius: 8px; padding: 15px; border: 1px solid rgba(88, 166, 255, 0.3); margin-bottom: 25px;"><p style="font-size: 13px; color: var(--color-primary); font-weight:600; text-align: justify; line-height:1.5;">Gunakan kode Voucher Token khusus dari Administrator.</p></div>
+                    <div class="input-group">
+                        <label>Pilihan Paket Nominal & Bonus</label>
+                        <select id="depPaket" style="font-weight:700;">
+                            <option value="50K">Isi Rp 50.000 (Masuk Rp 50Rb - Tanpa Bonus)</option>
+                            <option value="100K">Isi Rp 100.000 (Masuk Rp 150Rb - Bonus 50K)</option>
+                            <option value="300K">Isi Rp 300.000 (Masuk Rp 400Rb - Bonus 100K)</option>
+                            <option value="500K">Isi Rp 500.000 (Masuk Rp 750Rb - Bonus 250K)</option>
+                            <option value="1M">Isi Rp 1.000.000 (Masuk Rp 1.5 Juta - Bonus 500K)</option>
+                        </select>
+                    </div>
+                    <div class="input-group"><label>Kode Token Valid</label><input type="text" id="depToken" placeholder="Contoh: TKN50-QW89X" style="text-transform: uppercase; font-weight:800; font-family:monospace; letter-spacing:1.5px; font-size:16px;"></div>
+                    <button class="btn-primary" onclick="prosesDepositToken()" style="margin-top:10px;">Validasi & Isi Saldo</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenAktivasi" class="screen" style="background: var(--bg-body); z-index: 150;">
+            <div style="width: 100%; box-sizing: border-box;">
+                <div class="sub-header"><div class="back-btn" onclick="tutupSub()">❮ Batal</div><div style="font-weight:800; font-size:18px; color:var(--text-main); flex:2; text-align:center;">Aktivasi Akun</div><div style="flex:1;"></div></div>
+                <div style="padding: 25px 20px;">
+                    <div style="background: var(--bg-card); padding: 25px 20px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; margin-bottom: 25px;">
+                        <div style="font-size: 40px; margin-bottom: 12px;">👑</div><h3 style="color: var(--color-warn); margin-bottom: 10px; font-size:20px;">Status Akun: TRIAL</h3>
+                        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">Aktifkan <b>Limit Kuota VIP</b> untuk menarik saldo.</p>
+                    </div>
+                    <div class="input-group">
+                        <label>Pilih 10 Tingkatan Limit VIP</label>
+                        <select id="paketAktivasi" style="color: var(--color-warn); font-weight: 800; border-color: var(--color-warn); font-size:13px; padding:16px;">
+                            <option value="150000|2000000">1. VIP Basic - Rp 150.000 (Limit Rp 2 Juta)</option>
+                            <option value="250000|5000000">2. VIP Bronze - Rp 250.000 (Limit Rp 5 Juta)</option>
+                            <option value="500000|12000000">3. VIP Silver - Rp 500.000 (Limit Rp 12 Juta)</option>
+                            <option value="750000|20000000">4. VIP Gold - Rp 750.000 (Limit Rp 20 Juta)</option>
+                            <option value="1000000|35000000">5. VIP Platinum - Rp 1.000.000 (Limit Rp 35 Juta)</option>
+                            <option value="1250000|50000000">6. VIP Diamond - Rp 1.250.000 (Limit Rp 50 Juta)</option>
+                            <option value="1500000|75000000">7. VIP Elite - Rp 1.500.000 (Limit Rp 75 Juta)</option>
+                            <option value="2000000|120000000">8. VIP Master - Rp 2.000.000 (Limit Rp 120 Juta)</option>
+                            <option value="2500000|200000000">9. VIP Grandmaster - Rp 2.500.000 (Limit Rp 200 Juta)</option>
+                            <option value="3000000|-1">10. VIP Legend - Rp 3.000.000 (UNLIMITED WD)</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" style="background: var(--color-warn); color: #000; margin-top:10px;" onclick="lanjutPembayaran()">Lanjut Ke Pembayaran</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenGateway" class="screen" style="background: var(--bg-body); z-index: 151;">
+            <div style="width: 100%; box-sizing: border-box;">
+                <div class="sub-header"><div class="back-btn" onclick="batalAktivasi()">❮ Kembali</div><div style="font-weight:800; font-size:18px; color:var(--text-main); flex:2; text-align:center;">Instruksi Bayar</div><div style="flex:1;"></div></div>
+                <div style="padding: 25px 20px;">
+                    <div style="background: var(--bg-card); border-radius: 12px; padding: 25px 20px; border: 1px solid var(--border-color);">
+                        <div style="background: rgba(88, 166, 255, 0.05); border-radius: 10px; padding: 20px; margin-bottom: 25px; text-align: center; border: 1px dashed var(--color-primary);">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight:700;">NOMINAL TRANSFER AKTIVASI:</div>
+                            <div style="font-size: 30px; font-weight: 900; color: var(--color-primary); letter-spacing:1px;" id="pgNominal">Rp 0</div>
+                        </div>
+                        
+                        <div style="font-size: 13px; font-weight:800; color:var(--text-main); margin-bottom:12px; text-transform:uppercase;">1. Pilih Metode Transfer:</div>
+                        
+                        <div class="payment-card" onclick="selectPayment('Bank BRI (4245-0100-4800-501)', this)">
+                            <div class="payment-logo">
+                                <img src="bri.JPG" alt="BRI" onerror="this.src='data:image/svg+xml;utf8,<svg viewBox=\'0 0 24 24\' fill=\'%2300529C\'><path d=\'M2 21h20v-2H2v2zm2-4h16V7H4v10zm11-8h3v6h-3V9zm-5 0h3v6h-3V9zm-5 0h3v6H7V9zM2 5v2h20V5H2z\'/></svg>'">
+                            </div>
+                            <div class="payment-details"><div style="font-size: 11px; color:var(--text-muted); font-weight:600;">Bank BRI</div><div style="font-size: 15px; font-weight: 900; color: var(--text-main); font-family: monospace; margin-top:2px;">4245-0100-4800-501</div></div>
+                        </div>
+
+                        <div class="payment-card" onclick="selectPayment('SeaBank (9014-8022-9330)', this)">
+                            <div class="payment-logo">
+                                <img src="seabank.JPG" alt="SeaBank" onerror="this.src='data:image/svg+xml;utf8,<svg viewBox=\'0 0 24 24\' fill=\'%23FF7000\'><path d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z\'/></svg>'">
+                            </div>
+                            <div class="payment-details"><div style="font-size: 11px; color:var(--text-muted); font-weight:600;">SeaBank</div><div style="font-size: 15px; font-weight: 900; color: var(--text-main); font-family: monospace; margin-top:2px;">9014-8022-9330</div></div>
+                        </div>
+
+                        <div class="payment-card" onclick="selectPayment('DANA E-Wallet (0858-1713-2589)', this)">
+                            <div class="payment-logo">
+                                <img src="dana.JPG" alt="DANA" onerror="this.src='data:image/svg+xml;utf8,<svg viewBox=\'0 0 24 24\' fill=\'%23118EEA\'><path d=\'M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z\'/></svg>'">
+                            </div>
+                            <div class="payment-details"><div style="font-size: 11px; color:var(--text-muted); font-weight:600;">DANA (E-Wallet)</div><div style="font-size: 15px; font-weight: 900; color: var(--text-main); font-family: monospace; margin-top:2px;">0858-1713-2589</div></div>
+                        </div>
+
+                        <div style="margin: 25px 0 15px 0; text-align: center; border: 1px dashed var(--border-color); padding: 20px; border-radius: 12px; background: rgba(0,0,0,0.3);">
+                            <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px; font-weight: 800; text-transform: uppercase;">2. Wajib Unggah Bukti Asli:</div>
+                            <input type="file" id="uploadBuktiGateway" accept="image/*" style="display: none;" onchange="handleProof(event)">
+                            <button style="background: var(--bg-input); color: var(--color-primary); border: 1px solid var(--color-primary); padding: 14px; border-radius: 8px; font-weight: 900; cursor: pointer; width: 100%; box-sizing: border-box;" onclick="document.getElementById('uploadBuktiGateway').click()">📸 Buka Kamera / Galeri</button>
+                            <div id="proofPreviewCont" style="display:none; margin-top: 15px;">
+                                <img id="proofPreviewImg" src="" style="max-width: 100%; height: auto; max-height: 180px; border-radius: 8px; border: 2px solid var(--color-primary);">
+                            </div>
+                        </div>
+
+                        <div style="font-size: 12px; font-weight:700; color:var(--text-muted); margin: 25px 0 10px 0; text-align:center;">Kirim Manual via CS:</div>
+                        <div class="grid-2-btn" style="margin-bottom: 10px;">
+                            <button style="background:transparent; color:#2ea043; border:2px solid #2ea043; padding:12px; border-radius:8px; font-size:13px; font-weight:800; cursor:pointer; width:100%; box-sizing:border-box;" onclick="hubungiCS('whatsapp')">WhatsApp</button>
+                            <button style="background:transparent; color:#58a6ff; border:2px solid #58a6ff; padding:12px; border-radius:8px; font-size:13px; font-weight:800; cursor:pointer; width:100%; box-sizing:border-box;" onclick="hubungiCS('telegram')">Telegram</button>
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="btnKonfirmasiBayar" onclick="prosesVerifikasiBukti()" disabled style="margin-top: 25px; padding:18px;">UPLOAD BUKTI & PILIH METODE</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenWithdraw" class="screen" style="background: var(--bg-body); z-index: 150;">
+            <div style="width: 100%; box-sizing: border-box;">
+                <div class="sub-header"><div class="back-btn" onclick="tutupSub()">❮ Batal</div><div style="font-weight:800; font-size:18px; color:var(--text-main); flex:2; text-align:center;">Tarik Tunai</div><div style="flex:1;"></div></div>
+                <div style="padding: 25px 20px;">
+                    <div style="background: var(--bg-card); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); margin-bottom: 25px;">
+                        <div style="font-size: 11px; color: var(--text-muted); font-weight: 800; margin-bottom: 8px; text-transform:uppercase;">Ditransfer Ke:</div>
+                        <div style="font-weight: 900; font-size: 16px; color: var(--color-primary); word-wrap: break-word;" id="wdBankInfo">-</div>
+                        <div style="font-size: 13px; color: var(--text-main); margin-top:4px; font-weight:600; word-wrap: break-word;" id="wdNamaInfo">-</div>
+                        <div style="border-top: 1px dashed var(--border-color); margin: 15px 0;"></div>
+                        <div style="display: flex; justify-content: space-between; gap: 10px; font-size: 13px; font-weight:600;"><span style="color: var(--text-muted); flex-shrink: 0;">Sisa Kuota VIP:</span><strong style="color: var(--color-warn); text-align: right;" id="wdLimitInfo">Rp 0</strong></div>
+                    </div>
+                    
+                    <div style="background: rgba(248, 81, 73, 0.1); border: 1px solid var(--color-down); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                        <div style="font-size: 11px; color: var(--color-down-light); font-weight:700;">SYARAT PENARIKAN (2X MODAL):</div>
+                        <div style="font-size: 14px; font-weight: 800; color: #fff; margin-top: 4px; word-wrap: break-word;" id="wdTargetInfo">Rp 0</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Nominal Penarikan (Dari Saldo IDR)</label>
+                        <div style="display: flex; gap: 12px; align-items: stretch;">
+                            <input type="text" inputmode="numeric" id="inputWdAmount" placeholder="Ketik Nominal..." style="flex:1; padding:16px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-main); font-size:16px; outline:none; font-weight:800; min-width:0; box-sizing:border-box;" oninput="formatRupiahInput(this)">
+                            <button style="background:var(--bg-input); color:var(--color-primary); border:1px solid var(--color-primary); border-radius:8px; padding:0 20px; font-size:15px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; box-sizing:border-box; flex-shrink: 0;" onclick="setMaxWD()">MAX</button>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="prosesWithdrawAsli()" style="margin-top:15px; padding:18px;">Proses Penarikan ke Bank</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-fs" id="modalStruk" style="background: rgba(0,0,0,0.95);" onclick="if(event.target === this) tutupModal('modalStruk')">
+            <div class="struk-card">
+                <div class="struk-header">Bukti Transaksi Sinergi</div>
+                <div class="struk-body">
+                    <div style="text-align: center; margin-bottom: 25px;"><div id="strukIcon" style="width: 55px; height: 55px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 12px; font-weight:900; background:var(--color-warn); color:#fff; box-shadow:0 5px 15px rgba(210,153,34,0.4);">⏳</div><div id="strukStatusText" style="font-size: 17px; font-weight: 900; color: var(--color-warn);">PROSES KLIRING</div></div>
+                    <div style="text-align: center; font-size: 30px; font-weight: 900; color: #000; margin-bottom: 25px; padding-bottom: 18px; border-bottom: 2px dashed #ddd; word-wrap: break-word;" id="strukAmount">Rp 0</div>
+                    <div class="struk-row"><span class="struk-label">No. Referensi</span><span class="struk-val" id="strukId" style="font-family:monospace;">-</span></div>
+                    <div class="struk-row"><span class="struk-label">Waktu</span><span class="struk-val" id="strukDate">-</span></div>
+                    <div class="struk-row"><span class="struk-label">Kategori</span><span class="struk-val" id="strukKategori">-</span></div>
+                    <div style="border-top: 1px dashed #eee; margin: 15px 0;"></div>
+                    <div class="struk-row"><span class="struk-label">Keterangan</span><span class="struk-val" id="strukKet">-</span></div>
+                    <button style="width: 100%; padding: 15px; background: #e5e7eb; border: none; border-radius: 8px; font-weight: 900; margin-top: 20px; font-size:14px; cursor: pointer; color:#111; box-sizing: border-box;" onclick="tutupModal('modalStruk')">TUTUP BUKTI</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="navbar" id="bottomNav" style="display: none;">
+        <div class="nav-item active" onclick="triggerNav('Market', 0)"><span class="nav-icon">📊</span><span>Market</span></div>
+        <div class="nav-item" onclick="triggerNav('Trade', 1)"><span class="nav-icon">💱</span><span>Trade</span></div>
+        <div class="nav-item" onclick="triggerNav('Wallet', 2)"><span class="nav-icon">💼</span><span>Dompet</span></div>
+        <div class="nav-item" onclick="triggerNav('Profile', 3)"><span class="nav-icon">👤</span><span>Profil</span></div>
+    </div>
+
+</div>
+<script>
+/* =========================================================================
+   CORE ENGINE & LOGIC (UPGRADE VIP W/ FOTO & ANIMASI 1 MENIT)
+   ========================================================================= */
+let userData = {};
+let selPaket = { harga: 0, limit: 0, nama: "" }; let tempPhotoBase64 = "";
+let userDeviceStr = "Memuat..."; let selectedPaymentStr = ""; let mainChart;
+let toastTimeout = null; 
+let hasProof = false; // Penanda kalau user udah upload bukti
+
+const validTokens = {
+    "50K": ["TKN50-QW89X", "TKN50-PL21M", "TKN50-RZ55K", "TKN50-A1B2C", "TKN50-D3E4F", "TKN50-G5H6I", "TKN50-J7K8L", "TKN50-M9N0O", "TKN50-P1Q2R", "TKN50-S3T4U"],
+    "100K": ["TKN100-AB76C", "TKN100-VN34J", "TKN100-DF99P", "TKN100-ZX12Q", "TKN100-WE34R", "TKN100-TY56S", "TKN100-UI78T", "TKN100-OP90Y", "TKN100-AS12D", "TKN100-FG34H"],
+    "300K": ["TKN300-XY12Z", "TKN300-KL88N", "TKN300-HG45T", "TKN300-JK67L", "TKN300-QW23E", "TKN300-RT45Y", "TKN300-UI67O", "TKN300-PA89S", "TKN300-DF01G", "TKN300-HJ23K"],
+    "500K": ["TKN500-OP67R", "TKN500-ST23W", "TKN500-UI78B", "TKN500-LZ45X", "TKN500-CV67B", "TKN500-NM89M", "TKN500-QW01A", "TKN500-ER23S", "TKN500-TY45D", "TKN500-UI67F"],
+    "1M": ["TKN1M-VX90D", "TKN1M-ZQ44F", "TKN1M-LM11G", "TKN1M-GH22J", "TKN1M-JK33L", "TKN1M-QW44E", "TKN1M-RT55Y", "TKN1M-UI66O", "TKN1M-PA77S", "TKN1M-DF88G"]
+};
+
+const defaultCoins = [
+    { id: "SNG", name: "Sinergi Coin", type: "normal", price: 85000, basePrice: 85000, hist: [] },
+    { id: "DIA", name: "Diamond Core", type: "normal", price: 125000, basePrice: 125000, hist: [] },
+    { id: "BTC", name: "Bitcoin", type: "stable", price: 950000000, basePrice: 950000000, hist: [] },
+    { id: "ETH", name: "Ethereum", type: "stable", price: 55000000, basePrice: 55000000, hist: [] },
+    { id: "OMNI", name: "Omni Network", type: "pumpable", price: 15000, basePrice: 15000, hist: [], megaPumpEnd: 0 },
+    { id: "NXG", name: "NexGen", type: "trap", price: 31000, basePrice: 31000, hist: [] },
+    { id: "SOL", name: "Solana", type: "roller", price: 320000, basePrice: 320000, hist: [] }, 
+    { id: "DOGE", name: "Dogecoin", type: "pumpable", price: 2500, basePrice: 2500, hist: [], megaPumpEnd: 0 }, 
+    { id: "PEPE", name: "Pepe Frog", type: "pumpable", price: 50, basePrice: 50, hist: [], megaPumpEnd: 0 } 
+];
+
+let marketData = []; let activeMarketFilter = 'gainers'; let activeHistFilter = 'all'; 
+let currentTradeCoin = 'SNG'; let tradeMode = 'buy'; 
+const CHART_LENGTH = 150; 
+
+function initApp() {
+    try {
+        let savedUser = localStorage.getItem('sng_master_v13_user'); 
+        let savedMarket = localStorage.getItem('sng_master_v13_market');
+        
+        let ua = navigator.userAgent; 
+        if(/android/i.test(ua)) userDeviceStr = "Android Device"; else if(/iPad|iPhone|iPod/.test(ua)) userDeviceStr = "iOS Device (Apple)"; else if(/Windows/.test(ua)) userDeviceStr = "Windows PC"; else if(/Mac OS/.test(ua)) userDeviceStr = "Mac OS"; else userDeviceStr = "Web Browser";
+        
+        if(savedMarket) { 
+            marketData = JSON.parse(savedMarket); 
+            marketData.forEach(c => { 
+                let def = defaultCoins.find(d => d.id === c.id);
+                if(!c.basePrice) c.basePrice = def ? def.basePrice : c.price;
+                while(c.hist.length < CHART_LENGTH) c.hist.unshift(c.price); 
+            });
+        } else {
+            marketData = JSON.parse(JSON.stringify(defaultCoins));
+            marketData.forEach(c => { c.hist = Array(CHART_LENGTH).fill(c.price); });
+        }
+
+        if(savedUser) {
+            userData = JSON.parse(savedUser);
+            if(userData.isLoggedIn) {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainHeader').style.display = 'flex';
+                document.getElementById('mainWrapper').style.display = 'block';
+                if(window.innerWidth <= 768) document.getElementById('bottomNav').style.display = 'flex';
+                
+                updateAllUI(); renderMarket(); try { setupChart(); } catch(e) {}
+            }
+        } else {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainHeader').style.display = 'none';
+            document.getElementById('mainWrapper').style.display = 'none';
+            document.getElementById('bottomNav').style.display = 'none';
+        }
+        
+        setInterval(tickMarket, 1500); 
+        scheduleNextGlobalAct();
+        
+        // Pengecekan Riwayat Tertunda (1 MENIT)
+        let now = Date.now();
+        let hRef = false; 
+        if(userData.history) {
+            userData.history.forEach(h => { if(h.status === "pending" && h.pendingTime && now >= h.pendingTime) { h.status = "success"; hRef = true; }});
+            if(hRef) { saveData(); if(document.getElementById('screenHistory').classList.contains('active')) renderHistory(); }
+        }
+    } catch(e) {}
+}
+
+function tutupWelcomeBonus() {
+    document.getElementById("welcomeBonusModal").classList.remove("active");
+    document.getElementById("welcomeBonusModal").style.display = "none";
+}
+
+function prosesDaftar() {
+    let u = document.getElementById("regUser").value, e = document.getElementById("regEmail").value, b = document.getElementById("regBank").value, n = document.getElementById("regName").value, r = document.getElementById("regNumber").value;
+    
+    if(!u || !e || !b || !n || !r) return showToast("Harap lengkapi semua form pendaftaran!", true);
+    if(r.length < 8) return showToast("Gagal! Nomor Rekening / E-Wallet minimal 8 angka.", true);
+    
+    document.getElementById("fullLoadingOverlay").style.display = "flex";
+    let loadText = document.getElementById("loadingTextDynamic");
+    loadText.innerText = "Memverifikasi identitas...";
+
+    setTimeout(() => { loadText.innerText = "Menghubungkan ke server institusi..."; }, 1500);
+    setTimeout(() => { loadText.innerText = "Menyiapkan dompet digital..."; }, 3000);
+    
+    setTimeout(() => {
+        loadText.innerText = "Berhasil! Mengalihkan...";
+
+        userData = { 
+            isLoggedIn: true, username: u, email: e, phone: "-", bank: b, accName: n, accNo: r, 
+            uid: Math.floor(10000000 + Math.random() * 90000000).toString(), joinDate: new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}),
+            balanceIDR: 500000, totalCapital: 500000, portfolio: {}, history: [], tokenUsage: {}, photo: "", status: "TRIAL", wdLimit: -1, wdTotal: 0, activationTime: 0 
+        };
+        userData.history.unshift({ id: genId(), time: new Date().toLocaleTimeString(), judul: "Bonus Registrasi Baru", nominal: 500000, tipe: "tambah", status: "success", cat: "in" });
+        
+        saveData(); 
+        
+        document.getElementById("fullLoadingOverlay").style.display = "none";
+        document.getElementById("loginScreen").style.display = "none"; 
+        
+        document.getElementById("mainHeader").style.display = "flex"; 
+        document.getElementById("mainWrapper").style.display = "block"; 
+        if(window.innerWidth <= 768) { document.getElementById("bottomNav").style.display = "flex"; }
+        
+        updateAllUI(); renderMarket(); try { setupChart(); } catch(err) {}
+        
+        document.getElementById("welcomeBonusModal").style.display = "flex";
+        document.getElementById("welcomeBonusModal").classList.add("active");
+
+    }, 4500);
+}
+
+function saveData() { try { localStorage.setItem('sng_master_v13_user', JSON.stringify(userData)); localStorage.setItem('sng_master_v13_market', JSON.stringify(marketData)); } catch(e) {} }
+function fmtRp(num) { return "Rp " + Math.round(num).toLocaleString('id-ID'); }
+
+function showToast(msg, isErr=false) { 
+    let t = document.getElementById("toast"); 
+    t.innerText = msg; 
+    t.style.background = isErr ? "var(--color-down)" : "var(--color-primary)"; 
+    t.style.color = isErr ? "#fff" : "#000"; 
+    t.style.display = "block"; 
+    if(toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => { t.style.display="none"; }, 4500); 
+}
+function genId() { return "TRX-" + Math.floor(10000000+Math.random()*90000000); }
+
+// =========================================================================
+// 2. AKTIVITAS GLOBAL
+// =========================================================================
+const namePrefixes = ["AND", "BUD", "SIT", "CUA", "TRA", "WHI", "AGU", "IND", "BAN", "PUT", "USE", "DWI", "RIZ", "MAY", "EKO", "FAZ", "GIL", "HND", "JOK", "KIK", "LUK", "MAM", "NUR", "OSA", "PRA", "QOR", "REN", "SET", "TEG", "UWA", "VER", "WAH", "YUD", "ZAI"];
+const bankList = ["BCA", "Mandiri", "BRI", "BNI", "CIMB"];
+const ewalletList = ["DANA", "OVO", "GoPay", "ShopeePay"];
+let globalActs = [];
+
+for(let i=0; i<15; i++) { globalActs.push(genGlobalActivity(true)); }
+
+function genGlobalActivity(isInit = false) {
+    let isBank = Math.random() > 0.45; let amount, via, acc, name; let isUnique = false;
+    while(!isUnique) {
+        name = namePrefixes[Math.floor(Math.random() * namePrefixes.length)] + "***";
+        if (isBank) {
+            amount = Math.floor(Math.random() * 480) * 1000000 + (Math.floor(Math.random()*10)*100000) + 5000000; 
+            if (amount > 499000000) amount = 499000000;
+            via = "Bank " + bankList[Math.floor(Math.random() * bankList.length)];
+            acc = `${Math.floor(1000 + Math.random() * 8999)}-****-${Math.floor(10 + Math.random() * 89)}`;
+        } else {
+            amount = Math.floor(Math.random() * 38) * 1000000 + (Math.floor(Math.random()*10)*100000) + 1000000;
+            via = ewalletList[Math.floor(Math.random() * ewalletList.length)];
+            let ewPref = ["0812", "0857", "0896", "0813", "0852", "0811", "0878"][Math.floor(Math.random()*7)];
+            acc = `${ewPref}-****-${Math.floor(100 + Math.random() * 899)}`;
+        }
+        let duplicate = globalActs.find(a => a.name === name || a.acc === acc);
+        if(!duplicate) isUnique = true;
+    }
+    let timeStr = new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+    if(isInit) { let pastDate = new Date(Date.now() - Math.floor(Math.random() * 3600000)); timeStr = pastDate.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', second:'2-digit'}); }
+    return { name, amount, via, acc, time: timeStr };
+}
+
+function scheduleNextGlobalAct() {
+    let delay = Math.floor(Math.random() * (30000 - 2000 + 1)) + 2000; 
+    setTimeout(() => {
+        globalActs.unshift(genGlobalActivity()); if(globalActs.length > 50) globalActs.pop();
+        if(document.getElementById('screenGlobal').classList.contains('active')) renderGlobal();
+        scheduleNextGlobalAct(); 
+    }, delay);
+}
+
+function renderGlobal() {
+    let ls = document.getElementById("globalList"); if(!ls) return; ls.innerHTML = "";
+    globalActs.forEach(act => { ls.innerHTML += `<div class="global-item"><div class="global-left"><div class="global-name">${act.name}</div><div class="global-desc">WD Ke ${act.via} (${act.acc})</div></div><div class="global-right"><div class="global-amount">+ ${fmtRp(act.amount)}</div><div class="global-time">${act.time}</div></div></div>`; });
+}
+
+// =========================================================================
+// 3. EDIT PROFIL & FOTO
+// =========================================================================
+function handleFoto(e) {
+    let file = e.target.files[0];
+    if(file) {
+        if(file.size > 2000000) return showToast("Maksimal ukuran foto 2MB", true);
+        let reader = new FileReader();
+        reader.onload = function(evt) { 
+            let img = new Image();
+            img.onload = function() {
+                let canvas = document.createElement('canvas');
+                let ctx = canvas.getContext('2d');
+                let maxSize = 200; 
+                let width = img.width; let height = img.height;
+                if (width > height) { if (width > maxSize) { height *= maxSize / width; width = maxSize; } } 
+                else { if (height > maxSize) { width *= maxSize / height; height = maxSize; } }
+                canvas.width = width; canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                tempPhotoBase64 = canvas.toDataURL('image/jpeg', 0.7); 
+                document.getElementById("editImage").src = tempPhotoBase64; 
+                document.getElementById("editImage").style.display = "block"; 
+                document.getElementById("editInisial").style.display = "none"; 
+            };
+            img.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function loadTempProfile() {
+    document.getElementById("eUser").value = userData.username; 
+    document.getElementById("eEmail").value = userData.email || ""; 
+    document.getElementById("ePhone").value = (userData.phone === "-" ? "" : userData.phone); 
+    let bankSelect = document.getElementById("eBank");
+    let bankExists = Array.from(bankSelect.options).some(opt => opt.value === userData.bank);
+    if(bankExists) { bankSelect.value = userData.bank; } else { bankSelect.value = ""; }
+    document.getElementById("eName").value = userData.accName; 
+    document.getElementById("eNumber").value = userData.accNo;
+    
+    tempPhotoBase64 = userData.photo;
+    if(tempPhotoBase64) { document.getElementById("editImage").src = tempPhotoBase64; document.getElementById("editImage").style.display="block"; document.getElementById("editInisial").style.display="none"; } else { document.getElementById("editImage").style.display="none"; document.getElementById("editInisial").innerText=userData.username.charAt(0).toUpperCase(); document.getElementById("editInisial").style.display="block"; }
+}
+
+function bukaModalEdit() { loadTempProfile(); document.getElementById("modalEditProfile").classList.add('active'); }
+
+function simpanProfil() {
+    let u = document.getElementById("eUser").value, e = document.getElementById("eEmail").value, p = document.getElementById("ePhone").value, b = document.getElementById("eBank").value, n = document.getElementById("eName").value, r = document.getElementById("eNumber").value;
+    if(r && r.length < 8) return showToast("Nomor Rekening minimal 8 angka!", true);
+    if(u) userData.username = u; if(e) userData.email = e; if(p) userData.phone = p; if(b) userData.bank = b; if(n) userData.accName = n; if(r) userData.accNo = r;
+    if(tempPhotoBase64) userData.photo = tempPhotoBase64; saveData(); updateAllUI(); tutupModal('modalEditProfile'); showToast("Data Profil & Keamanan diperbarui!");
+}
+
+// =========================================================================
+// 4. DEPOSIT MULTI-USE 50X 
+// =========================================================================
+function prosesDepositToken() {
+    let paket = document.getElementById("depPaket").value; 
+    let token = document.getElementById("depToken").value.trim().toUpperCase();
+    if(!token) return showToast("Masukkan kode Voucher/Token!", true); 
+    
+    let pemakaian = userData.tokenUsage[token] || 0;
+    if(pemakaian >= 1) return showToast(`Gagal: Token ini sudah mencapai batas maksimal penggunaan (1/1).`, true);
+
+    if(validTokens[paket] && validTokens[paket].includes(token)) {
+        let saldoDiterima = 0;
+        if(paket === "50K") { saldoDiterima = 50000; }
+        else if(paket === "100K") { saldoDiterima = 150000; }
+        else if(paket === "300K") { saldoDiterima = 400000; }
+        else if(paket === "500K") { saldoDiterima = 750000; }
+        else if(paket === "1M") { saldoDiterima = 1500000; }
+
+        userData.balanceIDR += saldoDiterima; 
+        userData.totalCapital += saldoDiterima;
+        userData.tokenUsage[token] = pemakaian + 1;
+        
+        userData.history.unshift({ id: genId(), time: new Date().toLocaleTimeString(), judul: `Deposit Saldo (Token ${paket})`, nominal: saldoDiterima, tipe: "tambah", status: "success", cat: "in" });
+        if(userData.history.length > 100) userData.history.pop(); 
+
+        saveData(); updateAllUI(); showToast(`Deposit Sukses! Rp ${saldoDiterima.toLocaleString('id-ID')} masuk. (Pakai: ${userData.tokenUsage[token]}/50)`);
+        if(document.getElementById('screenWallet').classList.contains('active')) renderWallet();
+    } else { 
+        showToast("Token salah atau tidak sesuai dengan paket!", true); 
+    }
+}
+
+function updateAllUI() {
+    if(!userData.username) return;
+    document.getElementById("sideUsername").innerText = userData.username; document.getElementById("profName").innerText = userData.username;
+    document.getElementById("profUID").innerText = userData.uid; document.getElementById("profEmail").innerText = userData.email || "-";
+    document.getElementById("profPhone").innerText = userData.phone || "-"; document.getElementById("profJoinDate").innerText = userData.joinDate;
+    document.getElementById("profRef").innerText = userData.uid.substring(0,5); document.getElementById("profDevice").innerText = userDeviceStr;
+    document.getElementById("profBank").innerText = userData.bank; document.getElementById("profAccName").innerText = userData.accName; document.getElementById("profAccNo").innerText = userData.accNo;
+    document.getElementById("wdBankInfo").innerText = `${userData.bank} - ${userData.accNo}`; document.getElementById("wdNamaInfo").innerText = `a.n ${userData.accName}`;
+
+    let inisial = userData.username.charAt(0).toUpperCase();
+    if(userData.photo) {
+        document.getElementById("sideImage").src = userData.photo; document.getElementById("sideImage").style.display="block"; document.getElementById("sideInisial").style.display="none";
+        document.getElementById("profImage").src = userData.photo; document.getElementById("profImage").style.display="block"; document.getElementById("profInisial").style.display="none";
+    } else {
+        document.getElementById("sideImage").style.display="none"; document.getElementById("sideInisial").innerText=inisial; document.getElementById("sideInisial").style.display="block";
+        document.getElementById("profImage").style.display="none"; document.getElementById("profInisial").innerText=inisial; document.getElementById("profInisial").style.display="block";
+    }
+
+    let bStat = document.getElementById("profStatus"); let sStat = document.getElementById("sideStatus");
+    if(userData.status === "TRIAL") { bStat.className = "badge-status badge-trial"; bStat.innerText = "Status: TRIAL ACCOUNT"; sStat.className = "badge-status badge-trial"; sStat.innerText = "Status: TRIAL"; }
+    else if(userData.status === "FROZEN") { bStat.className = "badge-status badge-frozen"; bStat.innerText = "AKUN DIBEKUKAN"; sStat.className = "badge-status badge-frozen"; sStat.innerText = "FROZEN"; }
+    else { bStat.className = "badge-status badge-vip"; bStat.innerText = "VIP VERIFIED ✅"; sStat.className = "badge-status badge-vip"; sStat.innerText = "VIP ✅"; }
+}
+
+function resetAplikasi() { 
+    if(confirm("PERINGATAN: Apakah Anda yakin ingin menghapus akun dan mereset semua data secara permanen?")) { 
+        localStorage.removeItem('sng_master_v13_user'); localStorage.removeItem('sng_master_v13_market'); location.reload(); 
+    } 
+}
+
+// =========================================================================
+// 5. ALGORITMA MARKET LOGIS (+/- 10%), MEGA PUMP 500% & TRAP COIN
+// =========================================================================
+function tickMarket() {
+    if(!userData.isLoggedIn) return;
+
+    let now = Date.now(); let needsRender = false;
+    let hRef = false;
+    if(userData.history){
+        userData.history.forEach(h => { if(h.status === "pending" && h.pendingTime && now >= h.pendingTime) { h.status = "success"; hRef = true; } });
+    }
+    if(hRef) { saveData(); if(document.getElementById('screenHistory').classList.contains('active')) renderHistory(); }
+
+    marketData.forEach(c => {
+        let oldPrice = c.price;
+        let limitAtas = c.basePrice * 1.15; 
+        let limitBawah = c.basePrice * 0.85; 
+        
+        if (c.type === "pumpable") {
+            if (!c.megaPumpEnd || now > c.megaPumpEnd) {
+                if (Math.random() < 0.001) { c.price *= (Math.random() * 2 + 4); c.megaPumpEnd = now + (Math.floor(Math.random() * 600000) + 300000); } 
+                else { c.price *= (1 + (Math.random() * 0.1 - 0.05)); }
+            } else { if (c.price > c.basePrice * 1.5) { c.price *= (1 - (Math.random() * 0.05 + 0.01)); } }
+        } 
+        else if (c.type === "trap") { 
+            let owned = userData.portfolio[c.id] || 0; 
+            if (owned > 0) c.price *= (1 - (Math.random() * 0.02 + 0.005)); else c.price *= (1 + (Math.random() * 0.03 - 0.01)); 
+        } 
+        else if (c.type === "stable") {
+            c.price *= (1 + (Math.random() * 0.004 - 0.002));
+            limitAtas = c.basePrice * 1.05; limitBawah = c.basePrice * 0.95;
+        } 
+        else { c.price *= (1 + (Math.random() * 0.04 - 0.02)); }
+        
+        if (c.type !== "pumpable" || (!c.megaPumpEnd || now > c.megaPumpEnd)) {
+            if (c.price > limitAtas) c.price -= (c.price - limitAtas) * 0.1; 
+            if (c.price < limitBawah) c.price += (limitBawah - c.price) * 0.1; 
+        }
+        
+        if (c.price < 1) c.price = 1; 
+        c.hist.push(c.price); c.hist.shift();
+        if(Math.abs(c.price - oldPrice) > 0.0001) { c.flash = c.price > oldPrice ? 'up' : 'down'; needsRender = true; }
+    });
+    
+    saveData();
+    if(needsRender) { 
+        if(document.getElementById('screenMarket').classList.contains('active')) renderMarket(); 
+        if(document.getElementById('screenTrade').classList.contains('active')) updateTradeUI(); 
+        if(document.getElementById('screenWallet').classList.contains('active')) renderWallet(); 
+    }
+}
+
+function setupChart() {
+    let ctx = document.getElementById('mainChart');
+    if(!ctx) return;
+    mainChart = new Chart(ctx.getContext('2d'), { 
+        type: 'line', 
+        data: { labels: Array.from({length: CHART_LENGTH}, (_, i) => i), datasets: [{ data: [], borderWidth: 2, fill: true, pointRadius: 0, tension: 0.1 }] }, 
+        options: { 
+            animation: false, responsive: true, maintainAspectRatio: false, 
+            scales: { x: { display: false, min: CHART_LENGTH - 40, max: CHART_LENGTH - 1 }, y: { display: true, position: 'right', grid: {color: 'rgba(255,255,255,0.05)'}, ticks: {color: '#8b949e', font:{size:11}, callback: function(v) { return Math.round(v).toLocaleString('id-ID'); } } } }, 
+            plugins: { legend: { display: false }, tooltip: { enabled: false }, zoom: { pan: { enabled: true, mode: 'x', modifierKey: null }, zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }, limits: { x: { min: 0, max: CHART_LENGTH - 1 } } } } 
+        } 
+    });
+}
+
+function setMarketFilter(t, el) { document.querySelectorAll('#screenMarket .f-tab').forEach(e => e.classList.remove('active')); el.classList.add('active'); activeMarketFilter = t; renderMarket(); }
+function renderMarket() {
+    let ls = document.getElementById('marketList'); ls.innerHTML = ""; let sorted = [...marketData];
+    sorted.forEach(c => { c.pct = ((c.price - c.hist[0]) / c.hist[0]) * 100; c.vol = c.price * (c.type==='stable'?1000:50); });
+    if(activeMarketFilter === 'gainers') sorted.sort((a,b) => b.pct - a.pct); else if(activeMarketFilter === 'losers') sorted.sort((a,b) => a.pct - b.pct); else sorted.sort((a,b) => b.vol - a.vol);
+    sorted.forEach(c => {
+        let pStr = (c.pct>=0?"+":"")+c.pct.toFixed(2)+"%"; let cBg = c.pct>=0?"bg-up":"bg-down"; let fCls = c.flash==='up'?"flash-up":(c.flash==='down'?"flash-down":""); c.flash=null;
+        ls.innerHTML += `<div class="list-item" onclick="bukaTrade('${c.id}')"><div class="list-left"><div class="coin-name">${c.id} <span style="font-size:12px; color:var(--text-muted); padding-left:4px; font-weight:600;">${c.name}</span></div><div style="font-size:12px; color:var(--text-muted);">Vol Rp ${Math.round(c.vol/1000000).toLocaleString('id-ID')}M</div></div><div class="list-right"><div class="price-text ${fCls}">${fmtRp(c.price)}</div><div class="persen-badge ${cBg}">${pStr}</div></div></div>`;
+    });
+}
+
+function bukaTrade(id) { currentTradeCoin = id; triggerNav('Trade', 1); document.getElementById("tradeAmount").value=""; updateTradeUI(); }
+function setTradeMode(m) { tradeMode = m; document.getElementById("tabBuy").className = m==='buy'?"t-tab active-buy":"t-tab"; document.getElementById("tabSell").className = m==='sell'?"t-tab active-sell":"t-tab"; document.getElementById("labelTersedia").innerText = m==='buy'?"Saldo Utama IDR":"Saldo Koin Aset"; let btn = document.getElementById("btnProsesTrade"); btn.innerText = m==='buy'?`Beli ${currentTradeCoin}`:`Jual ${currentTradeCoin}`; btn.style.background = m==='buy'?"var(--color-up)":"var(--color-down)"; btn.style.color = "#fff"; document.getElementById("tradeAmount").value = ""; calcEstimasi(); updateTradeUI(); }
+function setTradeMax() { let c = marketData.find(x => x.id === currentTradeCoin); if(!c) return; if(tradeMode === 'buy') { document.getElementById("tradeAmount").value = Math.floor(userData.balanceIDR); } else { let own = userData.portfolio[c.id] || 0; document.getElementById("tradeAmount").value = own.toFixed(5); } calcEstimasi(); }
+function calcEstimasi() { let c = marketData.find(x => x.id === currentTradeCoin); if(!c) return; let amt = parseFloat(document.getElementById("tradeAmount").value)||0; let est = document.getElementById("tradeEst"); document.getElementById("tradeCurrentPrice").innerText = fmtRp(c.price); if(tradeMode==='buy') { est.innerText = (amt/c.price).toFixed(6)+" "+c.id; est.style.color="var(--color-primary)"; } else { est.innerText = fmtRp(amt*c.price); est.style.color="var(--color-primary)"; } }
+
+function updateTradeUI() {
+    let c = marketData.find(x => x.id === currentTradeCoin); if(!c) return;
+    document.getElementById("tradePairName").innerText = c.id+"/IDR";
+    let elPr = document.getElementById("tradeMainPrice"); let oldP = parseFloat(elPr.innerText.replace(/[^0-9.-]+/g,"")); elPr.innerText = fmtRp(c.price);
+    if(Math.abs(c.price-oldP)>0.001) { elPr.className = c.price>oldP?"flash-up":"flash-down"; setTimeout(()=>elPr.className="",800); }
+    let pct = ((c.price-c.hist[0])/c.hist[0])*100; let elPct = document.getElementById("tradePctInfo"); elPct.innerText = (pct>=0?"+":"")+pct.toFixed(2)+"%"; elPct.style.color = pct>=0?"var(--color-up-light)":"var(--color-down-light)";
+    
+    if(typeof mainChart !== 'undefined' && mainChart !== null && document.getElementById('screenTrade').classList.contains('active')) {
+        try {
+            let isUp = pct>=0; let ctx = document.getElementById('mainChart').getContext('2d'); let grad = ctx.createLinearGradient(0,0,0,450); grad.addColorStop(0, isUp?'rgba(46, 160, 67, 0.4)':'rgba(248, 81, 73, 0.4)'); grad.addColorStop(1, 'transparent');
+            mainChart.data.datasets[0].data = [...c.hist]; mainChart.data.datasets[0].borderColor = isUp?'#3fb950':'#ff7b72'; mainChart.data.datasets[0].backgroundColor = grad; 
+            let minX = Math.max(0, Math.floor(mainChart.scales.x.min)); let maxX = Math.min(CHART_LENGTH-1, Math.ceil(mainChart.scales.x.max));
+            let visibleData = c.hist.slice(minX, maxX+1);
+            if(visibleData.length > 0) { let min = Math.min(...visibleData); let max = Math.max(...visibleData); let pad = (max-min)*0.1 || min*0.01; mainChart.options.scales.y.min = min - pad; mainChart.options.scales.y.max = max + pad; }
+            mainChart.update('none'); 
+        } catch(e) {}
+    }
+    
+    let obB="", obS=""; let bp = c.price;
+    for(let i=0; i<3; i++) {
+        let bps = bp*(1-(Math.random()*0.005)); obB += `<div class="ob-row"><span class="ob-buy">${Math.round(bps).toLocaleString('id-ID')}</span><span class="ob-vol">${(Math.random()*10).toFixed(2)}K</span></div>`;
+        let sps = bp*(1+(Math.random()*0.005)); obS += `<div class="ob-row"><span class="ob-sell">${Math.round(sps).toLocaleString('id-ID')}</span><span class="ob-vol">${(Math.random()*10).toFixed(2)}K</span></div>`;
+    }
+    document.getElementById("obBuyList").innerHTML = `<div style="color:var(--text-muted); font-weight:700; margin-bottom:8px;">Bid (Beli)</div>` + obB;
+    document.getElementById("obSellList").innerHTML = `<div style="color:var(--text-muted); font-weight:700; margin-bottom:8px;">Ask (Jual)</div>` + obS;
+    document.getElementById("tradeAvail").innerText = tradeMode==='buy'?fmtRp(userData.balanceIDR):(userData.portfolio[c.id]||0).toFixed(5)+" "+c.id;
+}
+
+function executeTrade() {
+    let c = marketData.find(x => x.id === currentTradeCoin); let amt = parseFloat(document.getElementById("tradeAmount").value);
+    if(!amt||amt<=0) return showToast("Nominal kosong!",true); let now = new Date().toLocaleTimeString();
+    if(tradeMode==='buy') {
+        if(userData.balanceIDR<amt) return showToast("Saldo Utama IDR tidak cukup!",true); let gc = amt/c.price; userData.balanceIDR-=amt; userData.portfolio[c.id]=(userData.portfolio[c.id]||0)+gc;
+        userData.history.unshift({id: genId(), time:now, judul:`Beli Aset ${c.id}`, nominal:amt, tipe:"kurang", status:"success", cat: "trade"}); showToast(`Sukses Beli ${gc.toFixed(4)} ${c.id}`);
+    } else {
+        let own = userData.portfolio[c.id]||0; if(own < amt - 0.0001) return showToast("Aset Koin kurang!",true); if(Math.abs(own - amt) < 0.0001) amt = own;
+        let idr = amt*c.price; userData.portfolio[c.id]-=amt; userData.balanceIDR+=idr; if(userData.portfolio[c.id]<=0) delete userData.portfolio[c.id];
+        userData.history.unshift({id: genId(), time:now, judul:`Jual Aset ${c.id}`, nominal:idr, tipe:"tambah", status:"success", cat: "trade"}); showToast(`Jual Sukses! +${fmtRp(idr)}`);
+    }
+    if(userData.history.length>100) userData.history.pop(); saveData(); setTradeMode(tradeMode); updateAllUI();
+}
+
+function renderWallet() {
+    let eqKoin = 0; let ls = document.getElementById("portfolioList"); ls.innerHTML = "";
+    for(let[id,amt]of Object.entries(userData.portfolio)){ 
+        if(amt>0){ let c=marketData.find(x=>x.id===id); let val=amt*c.price; eqKoin+=val; 
+            ls.innerHTML+=`<div style="display:flex; justify-content:space-between; align-items:center; padding:20px 0; border-bottom:1px solid var(--border-color); cursor:pointer;" onclick="bukaTrade('${id}')"><div style="flex:1; min-width:0; overflow:hidden;"><div style="font-weight:900; font-size:16px;">${id}</div><div style="font-size:12px; color:var(--text-muted); margin-top:4px; font-weight:600;">${amt.toFixed(5)} Koin</div></div><div class="price-text" style="color:var(--text-main); flex-shrink:0; width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${fmtRp(val)}</div></div>`;
+        } 
+    }
+    if(eqKoin === 0) ls.innerHTML = "<div style='text-align:center; color:#888; font-size:13px; padding:25px 0;'>Belum ada aset koin. Beli koin di menu Trade.</div>";
+    document.getElementById("walletSaldoIDR").innerText = fmtRp(userData.balanceIDR); document.getElementById("walletSaldoKoin").innerText = fmtRp(eqKoin); document.getElementById("walletTotalEq").innerText = fmtRp(userData.balanceIDR + eqKoin);
+}
+
+function setHistFilter(t, el) { document.querySelectorAll('#screenHistory .f-tab').forEach(e => e.classList.remove('active')); el.classList.add('active'); activeHistFilter = t; renderHistory(); }
+function renderHistory() {
+    let ls = document.getElementById("historyList"); ls.innerHTML = ""; 
+    let filtered = userData.history.filter(h => { if(activeHistFilter === 'all') return true; if(activeHistFilter === 'trade') return h.cat === 'trade'; if(activeHistFilter === 'in') return h.cat === 'in'; if(activeHistFilter === 'out') return h.cat === 'out'; return true; });
+    if(filtered.length === 0) return ls.innerHTML="<div style='text-align:center; color:#888; padding-top:25px;'>Data riwayat kosong.</div>";
+    
+    filtered.forEach((h) => {
+        let lblCat = "Lainnya"; let bgCat = "#333";
+        if(h.cat==='trade'){ lblCat="Trading"; bgCat="var(--color-secondary)"; } else if(h.cat==='in'){ lblCat="Deposit"; bgCat="var(--color-up-light)"; } else if(h.cat==='out'){ lblCat="Penarikan"; bgCat="var(--color-warn)"; }
+        let isPen = h.status==="pending"; let cTxt = isPen?"var(--color-warn)":(h.tipe==="tambah"?"var(--color-up-light)":"var(--text-main)");
+        ls.innerHTML += `<div style="background:var(--bg-card); padding:20px; border-radius:12px; margin-bottom:15px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:flex-start; cursor:pointer;" onclick="bukaStrukData('${h.id}')"><div style="flex:1; padding-right:15px; min-width:0; overflow:hidden;"><div style="font-weight:800; font-size:15px; letter-spacing:0.5px; line-height:1.4; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${h.judul}</div><div style="font-size:12px; color:var(--text-muted); margin-top:8px; font-weight:600;">${h.time} ${isPen?'• (KLIRING)':''}</div><span style="display:inline-block; margin-top:10px; background:${bgCat}; color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; font-weight:800; text-transform:uppercase;">${lblCat}</span></div><div class="price-text" style="color:${cTxt}; width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;">${h.tipe==="tambah"?"+":"-"} ${fmtRp(h.nominal)}</div></div>`;
+    });
+}
+
+function bukaStrukData(idTrx) {
+    let h = userData.history.find(x => x.id === idTrx); if(!h) return;
+    document.getElementById("strukId").innerText = h.id; document.getElementById("strukDate").innerText = h.time; document.getElementById("strukAmount").innerText = fmtRp(h.nominal); 
+    let kStr = "Transaksi Lain"; if(h.cat==='trade') kStr = "Trading Aset"; else if(h.cat==='in') kStr = "Top-Up / Deposit"; else if(h.cat==='out') kStr = "Pencairan Dana"; document.getElementById("strukKategori").innerText = kStr; document.getElementById("strukKet").innerText = h.judul;
+    let icn = document.getElementById("strukIcon"); let txt = document.getElementById("strukStatusText");
+    if(h.status === "pending") { icn.innerText="⏳"; icn.style.background="var(--color-warn)"; txt.innerText="PROSES KLIRING BANK"; txt.style.color="var(--color-warn)"; } else { icn.innerText="✓"; icn.style.background="var(--color-up)"; txt.innerText="TRANSAKSI BERHASIL"; txt.style.color="var(--color-up-light)"; }
+    document.getElementById("modalStruk").style.display = "flex";
+}
+
+// =========================================================================
+// 6. GEMBOK UPGRADE & PENARIKAN (W/ UPLOAD BUKTI & 1 MENIT LOADING)
+// =========================================================================
+function cekBukaAktivasi() {
+    if(window.innerWidth <= 768) toggleSidebar();
+    if(userData.wdTotal > 0) return showToast("Akses Ditolak! Upgrade hanya bisa dilakukan SEBELUM penarikan pertama.", true);
+    bukaSub('screenAktivasi');
+}
+
+function prosesCekTarik() {
+    if(userData.status === "FROZEN") return showToast("Limit tercapai! Akun dibekukan.", true);
+    if(userData.status === "TRIAL") return bukaSub('screenAktivasi');
+    document.getElementById("wdLimitInfo").innerText = userData.wdLimit === -1 ? "UNLIMITED" : fmtRp(userData.wdLimit - userData.wdTotal);
+    let target = userData.totalCapital * 2; document.getElementById("wdTargetInfo").innerText = fmtRp(target);
+    document.getElementById("inputWdAmount").value = ""; bukaSub('screenWithdraw');
+}
+
+function bukaSub(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); if(window.innerWidth<=768){document.getElementById('bottomNav').style.display='none';} }
+function tutupSub() { document.getElementById('screenWallet').classList.add('active'); if(window.innerWidth<=768){document.getElementById('bottomNav').style.display='flex';} }
+
+function lanjutPembayaran() {
+    // Reset Data Gateway
+    selectedPaymentStr = ""; hasProof = false;
+    document.querySelectorAll('.payment-card').forEach(c => c.classList.remove('active'));
+    document.getElementById('proofPreviewCont').style.display = 'none';
+    document.getElementById('uploadBuktiGateway').value = "";
+    
+    // Set Paket Data
+    let selEl = document.getElementById("paketAktivasi"); 
+    let val = selEl.value.split('|'); 
+    selPaket.harga = parseInt(val[0]); selPaket.limit = parseInt(val[1]); selPaket.nama = selEl.options[selEl.selectedIndex].text; 
+    
+    document.getElementById("pgNominal").innerText = fmtRp(selPaket.harga); 
+    bukaSub('screenGateway');
+    
+    // Kunci Tombol Konfirmasi Awal
+    let btn = document.getElementById("btnKonfirmasiBayar");
+    btn.disabled = true; btn.innerText = "UPLOAD BUKTI & PILIH METODE"; btn.style.background="var(--bg-input)"; btn.style.color="var(--text-muted)";
+}
+
+function batalAktivasi() { tutupSub(); }
+
+function selectPayment(metode, element) { 
+    document.querySelectorAll('.payment-card').forEach(c => c.classList.remove('active')); 
+    element.classList.add('active'); selectedPaymentStr = metode; 
+    cekGatewaySiap();
+}
+
+function handleProof(e) {
+    let file = e.target.files[0];
+    if(file) {
+        let reader = new FileReader();
+        reader.onload = function(evt) {
+            let img = new Image();
+            img.onload = function() {
+                let canvas = document.createElement('canvas'); let ctx = canvas.getContext('2d');
+                let maxSize = 500; let width = img.width; let height = img.height;
+                if (width > height) { if (width > maxSize) { height *= maxSize / width; width = maxSize; } } else { if (height > maxSize) { width *= maxSize / height; height = maxSize; } }
+                canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height);
+                
+                document.getElementById("proofPreviewImg").src = canvas.toDataURL('image/jpeg', 0.8);
+                document.getElementById("proofPreviewCont").style.display = "block";
+                hasProof = true; cekGatewaySiap();
+            };
+            img.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function cekGatewaySiap() {
+    let btn = document.getElementById("btnKonfirmasiBayar");
+    if(selectedPaymentStr && hasProof) {
+        btn.disabled = false; btn.innerText = "VERIFIKASI BUKTI TRANSFER"; btn.style.background = "var(--color-primary)"; btn.style.color = "#000";
+    }
+}
+
+// ================= ANIMASI VERIFIKASI AI (1 MENIT) ================= //
+function prosesVerifikasiBukti() {
+    document.getElementById("verifyLoadingOverlay").style.display = "flex";
+    let dynText = document.getElementById("verifyDynamicText");
+    
+    dynText.innerText = "Mengunggah bukti transfer terenkripsi...";
+    
+    setTimeout(() => { dynText.style.opacity = 0; setTimeout(() => { dynText.innerText = "Menganalisis metadata & piksel gambar..."; dynText.style.opacity = 1; }, 500); }, 15000); // 15 detik
+    setTimeout(() => { dynText.style.opacity = 0; setTimeout(() => { dynText.innerText = "Mencocokkan data mutasi server bank..."; dynText.style.opacity = 1; }, 500); }, 30000); // 30 detik
+    setTimeout(() => { dynText.style.opacity = 0; setTimeout(() => { dynText.innerText = "Sistem memastikan keaslian transaksi..."; dynText.style.opacity = 1; }, 500); }, 45000); // 45 detik
+
+    setTimeout(() => {
+        document.getElementById("verifyLoadingOverlay").style.display = "none";
+        konfirmasiFinal(); // Eksekusi berhasil
+    }, 60000); // Pas 60 Detik (1 Menit)
+}
+
+function hubungiCS(tipe) { 
+    if(!selectedPaymentStr) return showToast("Pilih metode transfer terlebih dahulu di atas!", true);
+    let limitText = selPaket.limit === -1 ? "UNLIMITED" : fmtRp(selPaket.limit);
+    let msg = `Halo Admin Sinergi Pro,%0ASaya ingin konfirmasi pembayaran Upgrade Akun.%0A%0A👤 *Informasi Akun:*%0A- UID: ${userData.uid}%0A- Username: ${userData.username}%0A%0A💎 *Detail Upgrade VIP:*%0A- Paket: ${selPaket.nama}%0A- Biaya Aktivasi: ${fmtRp(selPaket.harga)}%0A- Kuota Limit WD: ${limitText}%0A%0A🏦 *Metode Transfer Pilihan:*%0A- Ditransfer ke: ${selectedPaymentStr}%0A%0ABerikut saya lampirkan bukti transfernya. Mohon segera diproses. Terima kasih!`;
+    if(tipe === 'whatsapp') { window.open('https://wa.me/6287793974131?text=' + msg); } else { window.open('https://t.me/VANDIV_AGENCY?text=' + msg); }
+}
+
+function konfirmasiFinal() { userData.status = "VIP"; userData.wdLimit = selPaket.limit; userData.wdTotal = 0; userData.activationTime = 0; userData.history.unshift({ id: genId(), time: new Date().toLocaleTimeString(), judul: "Pembayaran Upgrade VIP", nominal: selPaket.harga, tipe: "kurang", status: "success", cat: "out" }); saveData(); updateAllUI(); showToast("Aktivasi Sukses! Penarikan Terbuka."); tutupSub(); prosesCekTarik(); }
+
+function formatRupiahInput(el) { let val = el.value.replace(/[^0-9]/g, ''); if(val !== "") { el.value = parseInt(val, 10).toLocaleString('id-ID'); } else { el.value = ""; } }
+function setMaxWD() { let max = Math.min(userData.balanceIDR, (userData.wdLimit === -1 ? Infinity : userData.wdLimit - userData.wdTotal)); document.getElementById('inputWdAmount').value = Math.floor(max).toLocaleString('id-ID'); }
+
+/* FUNGSI WITHDRAW DENGAN ANIMASI DELAY 1 MENIT */
+function prosesWithdrawAsli() {
+    let rawVal = document.getElementById("inputWdAmount").value.replace(/\./g, '');
+    let amt = parseInt(rawVal) || 0;
+    
+    if(amt < 50000) return showToast("Minimal penarikan Rp 50.000", true); 
+    if(amt > userData.balanceIDR) return showToast("Gagal! Saldo IDR tidak cukup. Silakan Jual aset Koin Anda terlebih dahulu.", true);
+    
+    let target = userData.totalCapital * 2;
+    if(userData.balanceIDR < target) return showToast(`Gagal! Saldo Anda harus mencapai ${fmtRp(target)} dari hasil trading untuk bisa ditarik.`, true);
+    if(userData.wdLimit !== -1) { let sisa = userData.wdLimit - userData.wdTotal; if(amt > sisa) return showToast(`Gagal! Sisa Limit Penarikan: Rp ${sisa.toLocaleString('id-ID')}`, true); }
+    
+    document.getElementById("wdLoadingOverlay").style.display = "flex";
+    let dynText = document.getElementById("wdDynamicText");
+    
+    dynText.innerText = "Menghubungkan ke server Institusi Keuangan...";
+    
+    setTimeout(() => { dynText.style.opacity = 0; setTimeout(() => { dynText.innerText = "Memverifikasi keaslian rekening tujuan..."; dynText.style.opacity = 1; }, 500); }, 15000); 
+    setTimeout(() => { dynText.style.opacity = 0; setTimeout(() => { dynText.innerText = "Memproses kliring dana & pemotongan saldo..."; dynText.style.opacity = 1; }, 500); }, 30000); 
+    setTimeout(() => { dynText.style.opacity = 0; setTimeout(() => { dynText.innerText = "Menyelesaikan transaksi aman..."; dynText.style.opacity = 1; }, 500); }, 50000); 
+
+    setTimeout(() => {
+        userData.balanceIDR -= amt; userData.wdTotal += amt; 
+        // SET PENDING 1 MENIT (60.000 ms) BUKAN 5 MENIT LAGI
+        userData.history.unshift({ id: genId(), time: new Date().toLocaleTimeString(), judul: "Penarikan Dana (Withdraw)", nominal: amt, tipe: "kurang", pendingTime: Date.now() + 60000, status: "pending", cat: "out" });
+        if(userData.history.length > 100) userData.history.pop(); 
+
+        if(userData.wdLimit !== -1 && userData.wdTotal >= userData.wdLimit) { userData.status = "FROZEN"; setTimeout(()=> alert("PEMBERITAHUAN: Batas Limit VIP Anda habis. Akun dibekukan sementara."), 1500); }
+        saveData(); document.getElementById("inputWdAmount").value = ""; 
+        
+        document.getElementById("wdLoadingOverlay").style.display = "none";
+        tutupSub(); triggerNav('History'); 
+        showToast("Berhasil! Penarikan diproses bank (Estimasi 1 Menit)");
+    }, 60000); 
+}
+
+function tutupModal(id) { document.getElementById(id).classList.remove('active'); document.getElementById(id).style.display="none"; }
+function bukaModalDeposit() { document.getElementById("depToken").value = ""; document.getElementById("modalDeposit").classList.add('active'); }
+
+function triggerNav(scr, navIndex=null) {
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById('screen'+scr).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    if(navIndex !== null && document.querySelectorAll('.nav-item')[navIndex]) { document.querySelectorAll('.nav-item')[navIndex].classList.add('active'); }
+    if(window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('open'); }
+    if(scr==='Market') renderMarket(); if(scr==='Trade') updateTradeUI(); if(scr==='Wallet') renderWallet(); if(scr==='History') renderHistory(); if(scr==='Global') renderGlobal();
+}
+
+function toggleSidebar() { if(window.innerWidth > 768) return; document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('open'); }
+
+initApp();
+</script>
+</body>
+</html>
